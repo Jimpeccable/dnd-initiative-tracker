@@ -113,7 +113,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Patreon Integration Variables and Constants ---
     // IMPORTANT: Replace 'YOUR_PATREON_CLIENT_ID' with your actual Client ID from Patreon Developer Portal.
     // This ID is publicly visible and safe to include in client-side code.
-    const PATREON_CLIENT_ID = 'YOUR_PATREON_CLIENT_ID';
+    const PATREON_CLIENT_ID = 'JW9W45NLV7p_AKrUR6HA-cf03EFjQmAbOvpWU_37COQtgTDLMMbwnDLncoX2YMQ6';
     // The redirect URI MUST EXACTLY match one configured in your Patreon Developer Client settings.
     // For local testing, use http://localhost:8000 (or your local server port).
     // For GitHub Pages, use your deployed URL, e.g., https://YOUR_USERNAME.github.io/YOUR_REPOSITORY_NAME/
