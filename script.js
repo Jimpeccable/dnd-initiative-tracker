@@ -5,6 +5,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const rollDiceBtn = document.getElementById('rollDiceBtn');
     const rollResultDiv = document.getElementById('rollResult');
     const commonRollButtons = document.querySelectorAll('.dice-shortcut');
+    handlePatreonCallback();
 
     // Get references to HTML elements
     const currentRoundSpan = document.getElementById('currentRound');
@@ -117,7 +118,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // The redirect URI MUST EXACTLY match one configured in your Patreon Developer Client settings.
     // For local testing, use http://localhost:8000 (or your local server port).
     // For GitHub Pages, use your deployed URL, e.g., https://YOUR_USERNAME.github.io/YOUR_REPOSITORY_NAME/
-    const PATREON_REDIRECT_URI = 'https://dndtracker.nat20.live/patreon-callback'; // Dynamically sets to current page URL
+    const PATREON_REDIRECT_URI = 'https://dndtracker.nat20.live/'; // Dynamically sets to current page URL
     const PATREON_API_BASE_URL = 'https://www.patreon.com/api/oauth2/v2';
     const PATREON_OAUTH_AUTHORIZE_URL = 'https://www.patreon.com/oauth2/authorize';
     // Corrected Patreon scopes for APIv2 to fetch identity, email, memberships, and campaigns.
@@ -1566,11 +1567,11 @@ function loginWithPatreon() {
     window.location.href = authUrl;
 }
 
-    /**
-     * Handles the callback from Patreon after user authorization.
-     * Extracts the access token from the URL hash.
-     */
-    function handlePatreonCallback() {
+/**
+ * Handles the callback from Patreon after user authorization.
+ * Extracts the access token from the URL parameters.
+ */
+function handlePatreonCallback() {
     const urlParams = new URLSearchParams(window.location.search);
     const authCode = urlParams.get('code');
     const error = urlParams.get('error');
@@ -1653,11 +1654,10 @@ async function exchangeCodeForToken(authCode) {
     }
 }
 
-    /**
-     * Fetches the user's Patreon membership status using the access token.
-     * Updates `isPaidPatreonMember` and then calls `updateFeatureAccess`.
-     */
-    async function fetchPatreonMembership() {
+/**
+ * Fetches the user's Patreon membership status using the access token.
+ */
+async function fetchPatreonMembership() {
     if (!patreonAccessToken) {
         console.warn('No Patreon access token available to fetch membership.');
         isPaidPatreonMember = false;
@@ -1724,26 +1724,37 @@ async function exchangeCodeForToken(authCode) {
      * Updates the visibility and enabled state of features based on Patreon membership.
      */
     function updateFeatureAccess() {
-        if (isPaidPatreonMember) {
-            patreonStatusDiv.textContent = 'Patreon Status: Logged in (Paid Member)';
-            patreonLoginBtn.style.display = 'none'; // Hide login button
-            partyManagementSection.classList.remove('patreon-locked-feature');
-            jsonControlsSection.classList.remove('patreon-locked-feature');
-            savePartyFileBtn.disabled = false;
-            loadPartyFileBtn.disabled = false;
-            copyJsonTemplateBtn.disabled = false;
-            importJsonCombatantBtn.disabled = false;
-        } else {
-            patreonStatusDiv.textContent = 'Patreon Status: Not a paid member';
-            patreonLoginBtn.style.display = 'block'; // Show login button
-            partyManagementSection.classList.add('patreon-locked-feature');
-            jsonControlsSection.classList.add('patreon-locked-feature');
-            savePartyFileBtn.disabled = true;
-            loadPartyFileBtn.disabled = true;
-            copyJsonTemplateBtn.disabled = true;
-            importJsonCombatantBtn.disabled = true;
-        }
+    // Use the same element IDs as in your HTML
+    // These should match your actual HTML element IDs
+    const patreonStatusElement = document.getElementById('patreonStatus');
+    const patreonLoginElement = document.getElementById('patreonLoginBtn');
+    const partyManagementElement = document.getElementById('partyManagementSection');
+    const jsonControlsElement = document.getElementById('jsonControlsSection');
+    const savePartyFileElement = document.getElementById('savePartyFileBtn');
+    const loadPartyFileElement = document.getElementById('loadPartyFileBtn');
+    const copyJsonTemplateElement = document.getElementById('copyJsonTemplateBtn');
+    const importJsonCombatantElement = document.getElementById('importJsonCombatantBtn');
+
+    if (isPaidPatreonMember) {
+        if (patreonStatusElement) patreonStatusElement.textContent = 'Patreon Status: Logged in (Paid Member)';
+        if (patreonLoginElement) patreonLoginElement.style.display = 'none';
+        if (partyManagementElement) partyManagementElement.classList.remove('patreon-locked-feature');
+        if (jsonControlsElement) jsonControlsElement.classList.remove('patreon-locked-feature');
+        if (savePartyFileElement) savePartyFileElement.disabled = false;
+        if (loadPartyFileElement) loadPartyFileElement.disabled = false;
+        if (copyJsonTemplateElement) copyJsonTemplateElement.disabled = false;
+        if (importJsonCombatantElement) importJsonCombatantElement.disabled = false;
+    } else {
+        if (patreonStatusElement) patreonStatusElement.textContent = 'Patreon Status: Not a paid member';
+        if (patreonLoginElement) patreonLoginElement.style.display = 'block';
+        if (partyManagementElement) partyManagementElement.classList.add('patreon-locked-feature');
+        if (jsonControlsElement) jsonControlsElement.classList.add('patreon-locked-feature');
+        if (savePartyFileElement) savePartyFileElement.disabled = true;
+        if (loadPartyFileElement) loadPartyFileElement.disabled = true;
+        if (copyJsonTemplateElement) copyJsonTemplateElement.disabled = true;
+        if (importJsonCombatantElement) importJsonCombatantElement.disabled = true;
     }
+}
 
 
     // --- Event Listeners ---
