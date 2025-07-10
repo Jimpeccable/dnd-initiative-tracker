@@ -117,11 +117,11 @@ document.addEventListener('DOMContentLoaded', () => {
     // The redirect URI MUST EXACTLY match one configured in your Patreon Developer Client settings.
     // For local testing, use http://localhost:8000 (or your local server port).
     // For GitHub Pages, use your deployed URL, e.g., https://YOUR_USERNAME.github.io/YOUR_REPOSITORY_NAME/
-    const PATREON_REDIRECT_URI = window.location.origin + window.location.pathname; // Dynamically sets to current page URL
+    const PATREON_REDIRECT_URI = 'http://localhost:8080/patreon-callback'; // Dynamically sets to current page URL
     const PATREON_API_BASE_URL = 'https://www.patreon.com/api/oauth2/v2';
     const PATREON_OAUTH_AUTHORIZE_URL = 'https://www.patreon.com/oauth2/authorize';
     // Corrected Patreon scopes for APIv2 to fetch identity, email, memberships, and campaigns.
-    const PATREON_SCOPE = 'identity identity[email] identity.memberships campaigns'; 
+    const PATREON_SCOPE = 'identity identity[email] identity.memberships campaigns';
     // IMPORTANT: This client secret should ideally be handled on a backend for security.
     // For client-side demonstration, it's included here as per user request.
     const PATREON_CLIENT_SECRET = 'd09zDlNitIXfcszn5Sp2aLHs-8yIt3jQ7rT7Y04GhvGmN9_Cn4Kcq1_FBk3BfvLa';
@@ -1545,46 +1545,115 @@ Once you have provided the JSON - Ask the player to return to the Initiative tra
     /**
      * Initiates the Patreon OAuth login flow by redirecting the user.
      */
-    function loginWithPatreon() {
-        // Construct the authorization URL
-        const authUrl = `${PATREON_OAUTH_AUTHORIZE_URL}?` +
-                       `response_type=token&` + // Request an access token directly (Implicit Grant)
-                       `client_id=${PATREON_CLIENT_ID}&` +
-                       `redirect_uri=${encodeURIComponent(PATREON_REDIRECT_URI)}&` +
-                       `scope=${encodeURIComponent(PATREON_SCOPE)}`;
-        window.location.href = authUrl; // Redirect the user
-    }
+function loginWithPatreon() {
+    // Use the correct scopes for API v2
+    const scopes = [
+        'identity',
+        'identity[email]',
+        'identity.memberships',
+        'campaigns.members'  // This is likely what you need instead of just 'campaigns'
+    ];
+    
+    const authUrl = 'https://www.patreon.com/oauth2/authorize?' + 
+        new URLSearchParams({
+            response_type: 'code',
+            client_id: PATREON_CLIENT_ID,
+            redirect_uri: PATREON_REDIRECT_URI,
+            scope: scopes.join(' ')
+        }).toString();
+    
+    console.log('Auth URL:', authUrl); // Debug log
+    window.location.href = authUrl;
+}
 
     /**
      * Handles the callback from Patreon after user authorization.
      * Extracts the access token from the URL hash.
      */
     function handlePatreonCallback() {
-        const hash = window.location.hash.substring(1); // Get hash fragment without '#'
+    // Check for authorization code in URL parameters (not hash)
+    const urlParams = new URLSearchParams(window.location.search);
+    const authCode = urlParams.get('code');
+    
+    if (authCode) {
+        // Exchange code for access token
+        exchangeCodeForToken(authCode);
+    } else {
+        // Fallback to check hash for existing implicit flow tokens
+        const hash = window.location.hash.substring(1);
         const params = new URLSearchParams(hash);
         const accessToken = params.get('access_token');
-
+        
         if (accessToken) {
             patreonAccessToken = accessToken;
-            // Store the access token for future sessions (with caution due to XSS risks)
-            // For a production app, a backend for secure token storage and refresh is recommended.
             localStorage.setItem('patreonAccessToken', accessToken);
             console.log('Patreon Access Token obtained:', accessToken);
-            // Clear hash from URL for cleaner appearance and to prevent re-processing on refresh
             window.history.replaceState({}, document.title, window.location.pathname + window.location.search);
-            fetchPatreonMembership(); // Immediately check membership
+            fetchPatreonMembership();
         } else {
-            console.log('No Patreon access token found in URL hash.');
-            // Try to load from local storage if not in URL (e.g., direct load after previous login)
+            // Try loading from localStorage...
             patreonAccessToken = localStorage.getItem('patreonAccessToken');
             if (patreonAccessToken) {
                 console.log('Patreon Access Token loaded from local storage.');
                 fetchPatreonMembership();
             } else {
-                updateFeatureAccess(); // Ensure features are locked if no token
+                updateFeatureAccess();
             }
         }
     }
+}
+
+/**
+ * Exchanges the authorization code for an access token
+ */
+async function exchangeCodeForToken(authCode) {
+    try {
+        const response = await fetch('https://www.patreon.com/api/oauth2/token', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: new URLSearchParams({
+                code: authCode,
+                grant_type: 'authorization_code',
+                client_id: PATREON_CLIENT_ID,
+                client_secret: PATREON_CLIENT_SECRET, // You'll need this
+                redirect_uri: PATREON_REDIRECT_URI
+            })
+        });
+
+        if (!response.ok) {
+            throw new Error(`Token exchange failed: ${response.status} ${response.statusText}`);
+        }
+
+        const tokenData = await response.json();
+        
+        if (tokenData.access_token) {
+            patreonAccessToken = tokenData.access_token;
+            localStorage.setItem('patreonAccessToken', tokenData.access_token);
+            
+            // Store refresh token if provided
+            if (tokenData.refresh_token) {
+                localStorage.setItem('patreonRefreshToken', tokenData.refresh_token);
+            }
+            
+            console.log('Patreon Access Token obtained via code exchange:', tokenData.access_token);
+            
+            // Clear the code from URL
+            window.history.replaceState({}, document.title, window.location.pathname + window.location.search.split('?')[0]);
+            
+            // Fetch membership data
+            fetchPatreonMembership();
+        } else {
+            throw new Error('No access token received');
+        }
+        
+    } catch (error) {
+        console.error('Error exchanging code for token:', error);
+        openMessageModal('Patreon Error', 'Failed to complete login. Please try again.');
+        updateFeatureAccess();
+    }
+}
 
     /**
      * Fetches the user's Patreon membership status using the access token.
