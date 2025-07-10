@@ -117,7 +117,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // The redirect URI MUST EXACTLY match one configured in your Patreon Developer Client settings.
     // For local testing, use http://localhost:8000 (or your local server port).
     // For GitHub Pages, use your deployed URL, e.g., https://YOUR_USERNAME.github.io/YOUR_REPOSITORY_NAME/
-    const PATREON_REDIRECT_URI = 'http://localhost:8080/patreon-callback'; // Dynamically sets to current page URL
+    const PATREON_REDIRECT_URI = 'https://dndtracker.nat20.live/patreon-callback'; // Dynamically sets to current page URL
     const PATREON_API_BASE_URL = 'https://www.patreon.com/api/oauth2/v2';
     const PATREON_OAUTH_AUTHORIZE_URL = 'https://www.patreon.com/oauth2/authorize';
     // Corrected Patreon scopes for APIv2 to fetch identity, email, memberships, and campaigns.
