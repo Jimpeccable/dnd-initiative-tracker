@@ -117,7 +117,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // The redirect URI MUST EXACTLY match one configured in your Patreon Developer Client settings.
     // For local testing, use http://localhost:8000 (or your local server port).
     // For GitHub Pages, use your deployed URL, e.g., https://YOUR_USERNAME.github.io/YOUR_REPOSITORY_NAME/
-    const PATREON_REDIRECT_URI = 'http://dndtracker.nat20.live/patreon-callback'; // Dynamically sets to current page URL
+    const PATREON_REDIRECT_URI = 'https://dndtracker.nat20.live/patreon-callback'; // Dynamically sets to current page URL
     const PATREON_API_BASE_URL = 'https://www.patreon.com/api/oauth2/v2';
     const PATREON_OAUTH_AUTHORIZE_URL = 'https://www.patreon.com/oauth2/authorize';
     // Corrected Patreon scopes for APIv2 to fetch identity, email, memberships, and campaigns.
@@ -1546,12 +1546,12 @@ Once you have provided the JSON - Ask the player to return to the Initiative tra
      * Initiates the Patreon OAuth login flow by redirecting the user.
      */
 function loginWithPatreon() {
-    // Use the correct scopes for API v2
+    // Corrected scopes for Patreon API v2
     const scopes = [
         'identity',
         'identity[email]',
         'identity.memberships',
-        'campaigns.members'  // This is likely what you need instead of just 'campaigns'
+        'campaigns.members'
     ];
     
     const authUrl = 'https://www.patreon.com/oauth2/authorize?' + 
@@ -1562,7 +1562,7 @@ function loginWithPatreon() {
             scope: scopes.join(' ')
         }).toString();
     
-    console.log('Auth URL:', authUrl); // Debug log
+    console.log('Auth URL:', authUrl);
     window.location.href = authUrl;
 }
 
@@ -1571,40 +1571,36 @@ function loginWithPatreon() {
      * Extracts the access token from the URL hash.
      */
     function handlePatreonCallback() {
-    // Check for authorization code in URL parameters (not hash)
     const urlParams = new URLSearchParams(window.location.search);
     const authCode = urlParams.get('code');
+    const error = urlParams.get('error');
+    
+    if (error) {
+        console.error('Patreon OAuth Error:', error);
+        const errorDescription = urlParams.get('error_description');
+        openMessageModal('Patreon Error', `Login failed: ${errorDescription || error}`);
+        updateFeatureAccess();
+        return;
+    }
     
     if (authCode) {
         // Exchange code for access token
         exchangeCodeForToken(authCode);
     } else {
-        // Fallback to check hash for existing implicit flow tokens
-        const hash = window.location.hash.substring(1);
-        const params = new URLSearchParams(hash);
-        const accessToken = params.get('access_token');
-        
-        if (accessToken) {
-            patreonAccessToken = accessToken;
-            localStorage.setItem('patreonAccessToken', accessToken);
-            console.log('Patreon Access Token obtained:', accessToken);
-            window.history.replaceState({}, document.title, window.location.pathname + window.location.search);
+        // Try loading from localStorage
+        patreonAccessToken = localStorage.getItem('patreonAccessToken');
+        if (patreonAccessToken) {
+            console.log('Patreon Access Token loaded from local storage.');
             fetchPatreonMembership();
         } else {
-            // Try loading from localStorage...
-            patreonAccessToken = localStorage.getItem('patreonAccessToken');
-            if (patreonAccessToken) {
-                console.log('Patreon Access Token loaded from local storage.');
-                fetchPatreonMembership();
-            } else {
-                updateFeatureAccess();
-            }
+            updateFeatureAccess();
         }
     }
 }
 
 /**
  * Exchanges the authorization code for an access token
+ * IMPORTANT: In production, this should be done on your backend server
  */
 async function exchangeCodeForToken(authCode) {
     try {
@@ -1617,12 +1613,14 @@ async function exchangeCodeForToken(authCode) {
                 code: authCode,
                 grant_type: 'authorization_code',
                 client_id: PATREON_CLIENT_ID,
-                client_secret: PATREON_CLIENT_SECRET, // You'll need this
+                client_secret: PATREON_CLIENT_SECRET,
                 redirect_uri: PATREON_REDIRECT_URI
             })
         });
 
         if (!response.ok) {
+            const errorText = await response.text();
+            console.error('Token exchange failed:', response.status, errorText);
             throw new Error(`Token exchange failed: ${response.status} ${response.statusText}`);
         }
 
@@ -1637,10 +1635,10 @@ async function exchangeCodeForToken(authCode) {
                 localStorage.setItem('patreonRefreshToken', tokenData.refresh_token);
             }
             
-            console.log('Patreon Access Token obtained via code exchange:', tokenData.access_token);
+            console.log('Patreon Access Token obtained via code exchange');
             
             // Clear the code from URL
-            window.history.replaceState({}, document.title, window.location.pathname + window.location.search.split('?')[0]);
+            window.history.replaceState({}, document.title, window.location.pathname);
             
             // Fetch membership data
             fetchPatreonMembership();
@@ -1660,72 +1658,67 @@ async function exchangeCodeForToken(authCode) {
      * Updates `isPaidPatreonMember` and then calls `updateFeatureAccess`.
      */
     async function fetchPatreonMembership() {
-        if (!patreonAccessToken) {
-            console.warn('No Patreon access token available to fetch membership.');
+    if (!patreonAccessToken) {
+        console.warn('No Patreon access token available to fetch membership.');
+        isPaidPatreonMember = false;
+        updateFeatureAccess();
+        return;
+    }
+
+    try {
+        // Fetch user identity and their memberships
+        const response = await fetch(`${PATREON_API_BASE_URL}/identity?include=memberships.campaign&fields[member]=patron_status,currently_entitled_amount_cents`, {
+            headers: {
+                'Authorization': `Bearer ${patreonAccessToken}`
+            }
+        });
+
+        if (!response.ok) {
+            if (response.status === 401) {
+                console.error('Patreon access token expired or invalid. Please log in again.');
+                localStorage.removeItem('patreonAccessToken');
+                localStorage.removeItem('patreonRefreshToken');
+                patreonAccessToken = null;
+                openMessageModal('Patreon Error', 'Your Patreon session has expired. Please log in again.');
+            } else {
+                const errorText = await response.text();
+                console.error('Error fetching Patreon membership:', response.status, errorText);
+                openMessageModal('Patreon Error', `Failed to fetch Patreon data: ${response.statusText}`);
+            }
             isPaidPatreonMember = false;
             updateFeatureAccess();
             return;
         }
 
-        try {
-            // Fetch user identity and their memberships
-            // Using the provided client secret for token exchange (if needed for refresh tokens, but not directly for implicit grant)
-            // For implicit grant, we directly use the access token.
-            const response = await fetch(`${PATREON_API_BASE_URL}/identity?include=memberships.campaign&fields[member]=patron_status,currently_entitled_to_pledge_cents`, {
-                headers: {
-                    'Authorization': `Bearer ${patreonAccessToken}`
-                }
-            });
+        const data = await response.json();
+        console.log('Patreon Identity Data:', data);
 
-            if (!response.ok) {
-                // If token is expired or invalid, clear it and log out
-                if (response.status === 401) {
-                    console.error('Patreon access token expired or invalid. Please log in again.');
-                    localStorage.removeItem('patreonAccessToken');
-                    patreonAccessToken = null;
-                    openMessageModal('Patreon Error', 'Your Patreon session has expired. Please log in again.');
-                } else {
-                    console.error('Error fetching Patreon membership:', response.status, response.statusText);
-                    openMessageModal('Patreon Error', `Failed to fetch Patreon data: ${response.statusText}`);
-                }
-                isPaidPatreonMember = false;
-                updateFeatureAccess();
-                return;
-            }
-
-            const data = await response.json();
-            console.log('Patreon Identity Data:', data);
-
-            // Check if the user has any active pledges to any campaign
-            // For a specific campaign, you would check `data.included` for a `member` object
-            // whose `relationships.campaign.data.id` matches your campaign ID,
-            // and then check its `patron_status`.
-            // For this example, we'll consider any active pledge as a paid member.
-            isPaidPatreonMember = false;
-            if (data.included) {
-                const members = data.included.filter(item => item.type === 'member');
-                for (const member of members) {
-                    // Check if patron_status is 'active_patron' or 'will_pay_soon'
-                    if (member.attributes.patron_status === 'active_patron' || member.attributes.patron_status === 'will_pay_soon') {
-                        // Optionally, check `currently_entitled_to_pledge_cents` if you have tiers
-                        // if (member.attributes.currently_entitled_to_pledge_cents > 0) {
-                            isPaidPatreonMember = true;
-                            break; // Found an active pledge, no need to check further
-                        // }
+        // Check if the user has any active pledges
+        isPaidPatreonMember = false;
+        if (data.included) {
+            const members = data.included.filter(item => item.type === 'member');
+            for (const member of members) {
+                // Check if patron_status is 'active_patron'
+                if (member.attributes.patron_status === 'active_patron') {
+                    // Optionally check the pledge amount
+                    if (member.attributes.currently_entitled_amount_cents > 0) {
+                        isPaidPatreonMember = true;
+                        break;
                     }
                 }
             }
-
-            console.log('Is Paid Patreon Member:', isPaidPatreonMember);
-            updateFeatureAccess();
-
-        } catch (error) {
-            console.error('Network error or unexpected response from Patreon API:', error);
-            openMessageModal('Patreon Error', 'Could not connect to Patreon. Please check your internet connection.');
-            isPaidPatreonMember = false;
-            updateFeatureAccess();
         }
+
+        console.log('Is Paid Patreon Member:', isPaidPatreonMember);
+        updateFeatureAccess();
+
+    } catch (error) {
+        console.error('Network error or unexpected response from Patreon API:', error);
+        openMessageModal('Patreon Error', 'Could not connect to Patreon. Please check your internet connection.');
+        isPaidPatreonMember = false;
+        updateFeatureAccess();
     }
+}
 
     /**
      * Updates the visibility and enabled state of features based on Patreon membership.
