@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>D&D Initiative Tracker</title>
+    <!-- Google Fonts - Inter for primary text, Poppins for headings -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@600;700&display=swap" rel="stylesheet">
+    <!-- Lucide Icons CDN for sleek iconography -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="stylesheet" href="style.css">
+    <!-- Favicon -->
+    <link rel="icon" href="favicon.ico" type="image/x-icon">
+</head>
+<body>
+    <!-- Vanta.js Background Element -->
+    <div id="vanta-background"></div>
+
+    <div class="container">
+        <div class="header-section">
+            <h1>D&D Initiative Tracker</h1>
+            <div class="round-turn-display">
+                <p>Round: <span id="currentRound">1</span></p>
+                <p>Turn: <span id="currentTurn">None</span></p>
+            </div>
+        </div>
+
+        <div class="main-content-grid">
+            <!-- Left Column: Combatants List & Add/Import -->
+            <div class="combatants-section card">
+                <h2>Combatants</h2>
+                <div class="controls-combatants-setup">
+                    <button id="openPcModalBtn" class="button button-primary"><i data-lucide="user-plus"></i> Add Player</button>
+                    <button id="openMonsterModalBtn" class="button button-primary"><i data-lucide="skull"></i> Add Monster</button>
+                    <!-- JSON Controls Section - Locked for non-Patreon users -->
+                    <div id="jsonControlsSection" class="button-group patreon-locked-feature">
+                        <button id="copyJsonTemplateBtn" class="button button-secondary"><i data-lucide="copy"></i> Copy JSON</button>
+                        <input type="file" id="loadJsonCombatantFile" accept=".json" style="display: none;">
+                        <button id="importJsonCombatantBtn" class="button button-secondary"><i data-lucide="upload"></i> Import JSON</button>
+                    </div>
+                </div>
+                <div class="controls-combatants-action">
+                    <button id="sortInitiativeBtn" class="button button-tertiary"><i data-lucide="arrow-down-up"></i> Sort Initiative</button>
+                    <button id="rollMonsterInitiativeBtn" class="button button-tertiary"><i data-lucide="dice"></i> Roll Monster Init</button>
+                    <button id="startInitiativeBtn" class="button button-tertiary"><i data-lucide="play"></i> Start Combat</button>
+                    <button id="nextTurnBtn" class="button button-tertiary"><i data-lucide="step-forward"></i> Next Turn</button>
+                    <button id="resetCombatBtn" class="button button-tertiary"><i data-lucide="rotate-ccw"></i> Reset Combat</button>
+                    <button id="clearAllBtn" class="button button-danger"><i data-lucide="trash-2"></i> Clear All</button>
+                </div>
+                <div id="combatantList" class="combatants-list">
+                    <!-- Combatant cards will be rendered here by JavaScript -->
+                </div>
+            </div>
+
+            <!-- Right Column: Dice Roller & Party Management -->
+            <div class="utility-section">
+                <!-- Dice Roller -->
+                <div class="dice-roller card">
+                    <h2>Dice Roller</h2>
+                    <div class="dice-roller-input">
+                        <input type="text" id="diceNotation" placeholder="e.g., 2d6+3" class="input-field">
+                        <button id="rollDiceBtn" class="button button-primary"><i data-lucide="dice"></i> Roll</button>
+                    </div>
+                    <div class="common-rolls">
+                        <h4>Common Rolls</h4>
+                        <div class="button-group">
+                            <button class="dice-shortcut button button-secondary" data-roll="1d4">1d4</button>
+                            <button class="dice-shortcut button button-secondary" data-roll="1d6">1d6</button>
+                            <button class="dice-shortcut button button-secondary" data-roll="1d8">1d8</button>
+                            <button class="dice-shortcut button button-secondary" data-roll="1d10">1d10</button>
+                            <button class="dice-shortcut button button-secondary" data-roll="1d12">1d12</button>
+                            <button class="dice-shortcut button button-secondary" data-roll="1d20">1d20</button>
+                            <button class="dice-shortcut button button-secondary" data-roll="1d100">1d100</button>
+                        </div>
+                        <h4>Damage Rolls</h4>
+                        <div class="button-group">
+                            <button class="dice-shortcut button button-secondary" data-roll="2d6">2d6</button>
+                            <button class="dice-shortcut button button-secondary" data-roll="3d6">3d6</button>
+                            <button class="dice-shortcut button button-secondary" data-roll="4d6">4d6</button>
+                        </div>
+                        <h4>Healing Rolls</h4>
+                        <div class="button-group">
+                            <button class="dice-shortcut button button-secondary" data-roll="1d8+5" title="e.g., Potion of Healing">Heal 1</button>
+                            <button class="dice-shortcut button button-secondary" data-roll="2d8+5" title="e.g., Cure Wounds">Heal 2</button>
+                        </div>
+                    </div>
+                    <div id="rollResult" class="roll-result"></div>
+                </div>
+
+                <!-- Party Management - Locked for non-Patreon users -->
+                <div id="partyManagementSection" class="party-management card patreon-locked-feature">
+                    <h2>Party Management</h2>
+                    <div class="party-management-controls">
+                        <input type="file" id="loadPartyFile" accept=".json" style="display: none;">
+                        <button id="loadPartyFileBtn" class="button button-secondary"><i data-lucide="folder-open"></i> Load Party</button>
+                        <button id="savePartyFileBtn" class="button button-secondary"><i data-lucide="save"></i> Save Current Party</button>
+                    </div>
+                    <p class="section-description">Save and load groups of PCs.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer-section">
+            <div class="patreon-promo">
+                <p>Enjoy the powerful, free Initiative Tracker! For DMs who want to take their game prep and play to the next level, consider becoming a patron on Patreon. Your support helps keep this tool awesome and free for everyone.</p>
+                <a href="https://www.patreon.com/jimpeccable" target="_blank" class="patreon-button" title="Support this project on Patreon">
+                    <i data-lucide="heart"></i> Support on Patreon
+                </a>
+                <div class="patreon-status-area">
+                    <p id="patreonStatus">Patreon Status: Not logged in</p>
+                    <button id="patreonLoginBtn" class="button button-primary"><i data-lucide="log-in"></i> Log in with Patreon</button>
+                </div>
+            </div>
+            <div class="dm-tools-section">
+                <h4>Useful DM Tools:</h4>
+                <ul>
+                    <li><a href="https://www.patreon.com/posts/exclusive-access-133747915" target="_blank">D&D Command Centre - Automate Common D&D Game Prep</a></li>
+                    <li><a href="https://shorturl.at/s1ViO" target="_blank">Curse of Strahd Cheat Sheet</a></li>
+                    <li><a href="https://docs.google.com/document/d/19jvPAIciyuRdUKPsNCA0_0P6jbmNR0QgqHuBM-XcaZc/edit?usp=sharing" target="_blank">Updated list of Free Assets</a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modals -->
+    <!-- PC Add Modal -->
+    <div id="modal-pc-add" class="modal">
+        <div class="modal-content card">
+            <span class="close-button" data-modal="modal-pc-add"><i data-lucide="x"></i></span>
+            <h2>Add New Player Character</h2>
+            <label for="pcNameModal">Name:</label>
+            <input type="text" id="pcNameModal" class="input-field">
+            <label for="pcInitiativeBonusModal">Initiative Bonus:</label>
+            <input type="number" id="pcInitiativeBonusModal" class="input-field" value="0">
+            <label for="pcMaxHpModal">Max HP:</label>
+            <input type="number" id="pcMaxHpModal" class="input-field">
+            <label for="pcAcModal">AC:</label>
+            <input type="number" id="pcAcModal" class="input-field">
+            <button id="addPcModalBtn" class="button button-primary">Add PC</button>
+        </div>
+    </div>
+
+    <!-- Monster Add Modal -->
+    <div id="modal-monster-add" class="modal">
+        <div class="modal-content card">
+            <span class="close-button" data-modal="modal-monster-add"><i data-lucide="x"></i></span>
+            <h2>Add New Monster</h2>
+            <label for="monsterSearchInput">Search Monster (or type to add custom):</label>
+            <input type="text" id="monsterSearchInput" class="input-field" placeholder="e.g., Goblin, Orc">
+            <div id="monsterSearchResults" class="monster-search-results"></div>
+            <label for="monsterNameModal">Name:</label>
+            <input type="text" id="monsterNameModal" class="input-field" placeholder="Monster Name (e.g., Goblin #1)">
+            <label for="monsterInitiativeModal">Initiative:</label>
+            <input type="number" id="monsterInitiativeModal" class="input-field">
+            <label for="monsterHpModal">Max HP:</label>
+            <input type="number" id="monsterHpModal" class="input-field">
+            <label for="monsterAcModal">AC:</label>
+            <input type="number" id="monsterAcModal" class="input-field">
+            <button id="addMonsterModalBtn" class="button button-primary">Add Monster</button>
+        </div>
+    </div>
+
+    <!-- Edit Combatant Modal -->
+    <div id="modal-edit-combatant" class="modal">
+        <div class="modal-content card">
+            <span class="close-button" data-modal="modal-edit-combatant"><i data-lucide="x"></i></span>
+            <h2>Edit Combatant</h2>
+            <input type="hidden" id="editCombatantId">
+            <label for="editNameModal">Name:</label>
+            <input type="text" id="editNameModal" class="input-field">
+            <label for="editInitiativeModal">Initiative:</label>
+            <input type="number" id="editInitiativeModal" class="input-field">
+            <label for="editHpModal">Current HP:</label>
+            <input type="number" id="editHpModal" class="input-field">
+            <label for="editMaxHpModal">Max HP:</label>
+            <input type="number" id="editMaxHpModal" class="input-field">
+            <label for="editAcModal">AC:</label>
+            <input type="number" id="editAcModal" class="input-field">
+            <label for="editTempHpModal">Temp HP:</label>
+            <input type="number" id="editTempHpModal" class="input-field">
+            <button id="saveEditCombatantBtn" class="button button-primary">Save Changes</button>
+        </div>
+    </div>
+
+    <!-- Condition Description Modal -->
+    <div id="modal-condition-description" class="modal">
+        <div class="modal-content card">
+            <span class="close-button" data-modal="modal-condition-description"><i data-lucide="x"></i></span>
+            <h2 id="conditionDescriptionTitle"></h2>
+            <p id="conditionDescriptionText"></p>
+        </div>
+    </div>
+
+    <!-- Add Condition Modal -->
+    <div id="modal-add-condition" class="modal">
+        <div class="modal-content card">
+            <span class="close-button" data-modal="modal-add-condition"><i data-lucide="x"></i></span>
+            <h2>Apply Conditions to <span id="addConditionCombatantName"></span></h2>
+            <input type="text" id="addConditionSearchInput" class="input-field" placeholder="Search conditions...">
+            <div id="conditionSelectionGrid" class="condition-selection-grid">
+                <!-- Conditions will be rendered here by JS -->
+            </div>
+            <label for="conditionDurationInput">Duration (Rounds, leave empty for permanent):</label>
+            <input type="number" id="conditionDurationInput" class="input-field" placeholder="e.g., 3, 0 for immediate">
+            <button id="applyConditionBtn" class="button button-primary" disabled>Apply Selected Conditions</button>
+        </div>
+    </div>
+
+    <!-- Clear Confirmation Modal -->
+    <div id="modal-clear-confirmation" class="modal">
+        <div class="modal-content card">
+            <span class="close-button" data-modal="modal-clear-confirmation"><i data-lucide="x"></i></span>
+            <h2>Clear Combatants</h2>
+            <p>Are you sure you want to clear combatants?</p>
+            <div class="button-group">
+                <button id="clearAllCombatantsBtn" class="button button-danger">Clear All Combatants</button>
+                <button id="clearMonstersBtn" class="button button-warning">Clear Monsters</button>
+                <button id="cancelClearBtn" class="button button-secondary">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Monster Full Details Modal -->
+    <div id="modal-monster-full-details" class="modal">
+        <div class="modal-content card">
+            <span class="close-button" data-modal="modal-monster-full-details"><i data-lucide="x"></i></span>
+            <h2 id="monsterDetailsName"></h2>
+            <div id="monsterDetailsContent" class="monster-full-details-content">
+                <!-- Monster details will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Generic Message/Alert Modal -->
+    <div id="modal-message" class="modal">
+        <div class="modal-content card">
+            <span class="close-button" data-modal="modal-message"><i data-lucide="x"></i></span>
+            <h2 id="messageModalTitle"></h2>
+            <p id="messageModalText"></p>
+            <button id="messageModalCloseBtn" class="button button-primary">OK</button>
+        </div>
+    </div>
+
+    <!-- Generic Confirmation Modal -->
+    <div id="modal-confirmation" class="modal">
+        <div class="modal-content card">
+            <span class="close-button" data-modal="modal-confirmation"><i data-lucide="x"></i></span>
+            <h2 id="confirmationModalTitle"></h2>
+            <p id="confirmationModalText"></p>
+            <div class="button-group">
+                <button id="confirmationModalConfirmBtn" class="button button-danger">Confirm</button>
+                <button id="confirmationModalCancelBtn" class="button button-secondary">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- Vanta.js Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vanta@latest/dist/vanta.cells.min.js"></script>
+    <script>
+        // Initialize Vanta.js background
+        VANTA.CELLS({
+            el: "#vanta-background",
+            mouseControls: true,
+            touchControls: true,
+            gyroControls: false,
+            minHeight: 200.00,
+            minWidth: 200.00,
+            scale: 1.00,
+            color1: 0x1A1A1A, // Darker color
+            color2: 0x303030 // Lighter dark color
+        });
+    </script>
+    <script src="script.js"></script>
+    <script>
+        // Initialize Lucide Icons after the DOM is loaded
+        document.addEventListener('DOMContentLoaded', () => {
+            lucide.createIcons();
+        });
+    </script>
+</body>
+</html>
