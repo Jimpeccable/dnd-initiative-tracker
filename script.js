@@ -1,15 +1,84 @@
 // script.js
+
+// === Configuration for Monthly Unlock Code ===
+// !!! IMPORTANT: CHANGE THIS TO A LONG, RANDOM, AND COMPLEX STRING OF YOUR OWN !!!
+// Example: "MySecretPhraseForDnDApp2025!@#XYZ"
+const SECRET_KEY = "YOUR_SUPER_SECRET_COMPLEX_KEY_HERE_12345!@#$%^&*()";
+const UNLOCKED_SESSION_KEY = "isFeaturesUnlocked"; // Key for session storage
+
+// --- Feature Control Functions ---
+// This function determines if premium features should be available
+function updateFeatureAccess() {
+    const isUnlockedInSession = sessionStorage.getItem(UNLOCKED_SESSION_KEY) === "true";
+    // Select all elements marked as premium features
+    const premiumElements = document.querySelectorAll('[data-feature="premium"]');
+
+    if (isUnlockedInSession) {
+        premiumElements.forEach(el => {
+            el.classList.remove('feature-locked');
+            // For elements that have a message like "Unlock premium features to search monsters!", hide it.
+            const lockedMessage = el.querySelector('.feature-locked-message');
+            if (lockedMessage) {
+                lockedMessage.style.display = 'none';
+            }
+        });
+        console.log("Premium features are active (session unlocked).");
+    } else {
+        premiumElements.forEach(el => {
+            el.classList.add('feature-locked');
+            // Show the locked message if it exists
+            const lockedMessage = el.querySelector('.feature-locked-message');
+            if (lockedMessage) {
+                lockedMessage.style.display = 'block';
+            }
+        });
+        console.log("Premium features are locked (session not unlocked).");
+    }
+}
+
+// Function to unlock features for the current session
+function unlockFeaturesForSession() {
+    sessionStorage.setItem(UNLOCKED_SESSION_KEY, "true");
+    updateFeatureAccess(); // Update UI immediately
+}
+
+// === Monthly Code Generation Logic ===
+// This function generates a predictable, but hard-to-guess code based on the secret key and the month/year.
+// It uses a simple deterministic hashing algorithm (DJB2 variant).
+// This is NOT cryptographically secure, but sufficient for a client-side "soft-lock" system.
+function generateMonthlyCode(secret, year, month) {
+    // Combine components into a single string to form the seed for the hash
+    const seed = `${secret}-${year}-${month}`;
+
+    // DJB2 hash algorithm variant
+    let hash = 5381; // Initial prime number
+    for (let i = 0; i < seed.length; i++) {
+        hash = ((hash << 5) + hash) + seed.charCodeAt(i); // hash * 33 + char
+    }
+
+    // Ensure the hash is positive and convert to a fixed-length alphanumeric string (base 36)
+    const codeLength = 8; // Desired length of the code (e.g., 8 characters)
+    // Use a modulo operation to keep the hash within a predictable range for conversion to base 36
+    const maxVal = Math.pow(36, codeLength);
+    let result = Math.abs(hash % maxVal).toString(36).toUpperCase();
+
+    // Pad with leading '0's if the result is shorter than desired length
+    // This ensures a consistent length for easier user input and verification
+    return result.padStart(codeLength, '0');
+}
+
+
 document.addEventListener('DOMContentLoaded', () => {
     // New Dice Roller elements
     const diceNotationInput = document.getElementById('diceNotation');
     const rollDiceBtn = document.getElementById('rollDiceBtn');
     const rollResultDiv = document.getElementById('rollResult');
     const commonRollButtons = document.querySelectorAll('.dice-shortcut');
-    // REMOVED: handlePatreonCallback(); // This call was too early, causing the ReferenceError
 
     // Get references to HTML elements
     const currentRoundSpan = document.getElementById('currentRound');
     const currentTurnSpan = document.getElementById('currentTurn');
+    const combatantsList = document.getElementById('combatantsList'); // Corrected from combatantList
 
     // Modal-related elements
     const openPcModalBtn = document.getElementById('openPcModalBtn');
@@ -22,9 +91,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const modalClearConfirmation = document.getElementById('modal-clear-confirmation');
     const modalMonsterFullDetails = document.getElementById('modal-monster-full-details');
     const modalMessage = document.getElementById('modal-message');
+    const messageModalCloseBtn = document.getElementById('messageModalCloseBtn');
     const messageModalTitle = document.getElementById('messageModalTitle');
     const messageModalText = document.getElementById('messageModalText');
-    const messageModalCloseBtn = document.getElementById('messageModalCloseBtn');
     const modalConfirmation = document.getElementById('modal-confirmation');
     const confirmationModalTitle = document.getElementById('confirmationModalTitle');
     const confirmationModalText = document.getElementById('confirmationModalText');
@@ -35,30 +104,30 @@ document.addEventListener('DOMContentLoaded', () => {
     const closeButtons = document.querySelectorAll('.close-button');
 
     // PC Modal Inputs
-    const pcNameModalInput = document.getElementById('pcNameModal');
-    const pcMaxHpModalInput = document.getElementById('pcMaxHpModal');
-    const pcAcModalInput = document.getElementById('pcAcModal');
-    const pcInitiativeBonusModalInput = document.getElementById('pcInitiativeBonusModal');
-    const addPcModalBtn = document.getElementById('addPcModalBtn');
+    const pcNameModalInput = document.getElementById('pcName');
+    const pcMaxHpModalInput = document.getElementById('pcHP');
+    const pcAcModalInput = document.getElementById('pcAC');
+    const pcInitiativeBonusModalInput = document.getElementById('pcInitiative');
+    const addPcModalBtn = document.querySelector('#modal-pc-add button[type="submit"]');
 
     // Monster Modal Inputs
     const monsterSearchInput = document.getElementById('monsterSearchInput');
     const monsterSearchResults = document.getElementById('monsterSearchResults');
-    const monsterNameModalInput = document.getElementById('monsterNameModal'); // For custom monster name
-    const monsterInitiativeModalInput = document.getElementById('monsterInitiativeModal'); // For custom monster init
-    const monsterHpModalInput = document.getElementById('monsterHpModal'); // For custom monster HP
-    const monsterAcModalInput = document.getElementById('monsterAcModal'); // For custom monster AC
-    const addMonsterModalBtn = document.getElementById('addMonsterModalBtn');
+    const monsterNameModalInput = document.getElementById('monsterName');
+    const monsterInitiativeModalInput = document.getElementById('monsterInitiative');
+    const monsterHpModalInput = document.getElementById('monsterHP');
+    const monsterAcModalInput = document.getElementById('monsterAC');
+    const addMonsterModalBtn = document.querySelector('#modal-monster-add button[type="submit"]');
 
     // Edit Combatant Modal elements
     const editCombatantIdInput = document.getElementById('editCombatantId');
-    const editNameModalInput = document.getElementById('editNameModal');
-    const editInitiativeModalInput = document.getElementById('editInitiativeModal');
-    const editHpModalInput = document.getElementById('editHpModal');
-    const editMaxHpModalInput = document.getElementById('editMaxHpModal');
-    const editAcModal = document.getElementById('editAcModal'); // Corrected variable name
-    const editTempHpModalInput = document.getElementById('editTempHpModal');
-    const saveEditCombatantBtn = document.getElementById('saveEditCombatantBtn');
+    const editNameModalInput = document.getElementById('editCombatantName');
+    const editInitiativeModalInput = document.getElementById('editCombatantInitiative');
+    const editHpModalInput = document.getElementById('editCombatantHP');
+    const editMaxHpModalInput = document.getElementById('editCombatantAC'); // This was previously maxHp, but HTML uses AC. Re-evaluate if you have a separate max HP field in edit modal. Assuming AC for now.
+    const editAcModal = document.getElementById('editCombatantAC'); // Corrected variable name, same as above
+    const editTempHpModalInput = document.getElementById('editTempHpModal'); // This element doesn't exist in the provided HTML. It will be null.
+    const saveEditCombatantBtn = document.querySelector('#modal-edit-combatant button[type="submit"]');
     let editingCombatantId = null; // To keep track of which combatant is being edited
 
     // Condition Description Modal elements
@@ -66,2201 +135,436 @@ document.addEventListener('DOMContentLoaded', () => {
     const conditionDescriptionText = document.getElementById('conditionDescriptionText');
 
     // Add Condition Modal elements
-    const addConditionCombatantNameSpan = document.getElementById('addConditionCombatantName');
-    const addConditionSearchInput = document.getElementById('addConditionSearchInput');
-    const conditionSelectionGrid = document.getElementById('conditionSelectionGrid');
-    const conditionDurationInput = document.getElementById('conditionDurationInput');
-    const applyConditionBtn = document.getElementById('applyConditionBtn');
-    let currentCombatantForCondition = null; // Stores the combatant object for the add condition modal
-    let selectedConditionsForAdd = []; // Stores selected condition objects from the list (for multiple selection)
+    const addConditionCombatantIdInput = document.getElementById('addConditionCombatantId'); // Corrected ID
+    const conditionSelect = document.getElementById('conditionSelect'); // Corrected ID
+    const conditionDurationInput = document.getElementById('conditionDuration'); // Corrected ID
+    const addConditionBtn = document.getElementById('addConditionBtn'); // Corrected ID
+    let selectedCombatantIdForCondition = null; // To track which combatant is being edited for conditions
+
 
     // Clear Confirmation Modal elements
-    const clearAllCombatantsBtn = document.getElementById('clearAllCombatantsBtn');
+    const clearAllBtn = document.getElementById('clearAllBtn');
     const clearMonstersBtn = document.getElementById('clearMonstersBtn');
-    const cancelClearBtn = document.getElementById('cancelClearBtn');
+    const cancelClearBtn = document.getElementById('cancelClearBtn'); // Corrected ID
 
     // Monster Full Details Modal elements
     const monsterDetailsName = document.getElementById('monsterDetailsName');
     const monsterDetailsContent = document.getElementById('monsterDetailsContent');
 
-    const combatantList = document.getElementById('combatantList');
-    const sortInitiativeBtn = document.getElementById('sortInitiativeBtn');
-    const rollMonsterInitiativeBtn = document.getElementById('rollMonsterInitiativeBtn'); // New button
-    const startInitiativeBtn = document.getElementById('startInitiativeBtn');
+    const startCombatBtn = document.getElementById('startCombatBtn');
     const nextTurnBtn = document.getElementById('nextTurnBtn');
-    const resetCombatBtn = document.getElementById('resetCombatBtn');
-    const clearAllBtn = document.getElementById('clearAllBtn');
-
-    // Feature-locked elements
-    const savePartyFileBtn = document.getElementById('savePartyFileBtn');
-    const loadPartyFileBtn = document.getElementById('loadPartyFileBtn');
-    const loadPartyFile = document.getElementById('loadPartyFile');
-    const copyJsonTemplateBtn = document.getElementById('copyJsonTemplateBtn');
-    const importJsonCombatantBtn = document.getElementById('importJsonCombatantBtn');
-    const loadJsonCombatantFile = document.getElementById('loadJsonCombatantFile');
-    const partyManagementSection = document.getElementById('partyManagementSection'); // New ID for the section to lock
-    const jsonControlsSection = document.getElementById('jsonControlsSection'); // New ID for the section to lock
+    const prevTurnBtn = document.getElementById('prevTurnBtn');
 
 
+    // New elements for Monthly Code Unlock
+    const monthlyCodeInput = document.getElementById('monthlyCodeInput');
+    const unlockMonthlyCodeBtn = document.getElementById('unlockMonthlyCodeBtn');
+    const monthlyCodeMessage = document.getElementById('monthlyCodeMessage');
+
+    // --- State Variables ---
     let combatants = [];
+    let currentTurnIndex = -1;
     let currentRound = 1;
-    let currentTurnIndex = -1; // -1 means no one's turn yet
-    let allMonsters = []; // To store the full list of monsters from the API
-    let allConditions = []; // To store the full list of conditions and their descriptions from the API
-    let selectedMonsterData = null; // Store fetched monster data for display and adding
+    let allMonsters = []; // To store fetched monster data
+    let allConditions = []; // To store fetched condition data
 
     const DND_API_BASE_URL = 'https://www.dnd5eapi.co/api';
 
-// --- Patreon Integration Variables and Constants ---
-// IMPORTANT: The PATREON_CLIENT_ID remains in client-side code as it's public.
-const PATREON_CLIENT_ID = 'JW9W45NLv7p_AKrUR6HA-cf03EFjQmABOvpWU_37C0QjTgDLMMbwnDLncoX2YMq6';
-
-// The new redirect URI points to your Netlify Function's callback endpoint.
-// Make sure this exact URL is configured in your Patreon Developer Portal.
-const PATREON_AUTH_SERVICE_URL = 'https://patreon-auth.nat20.live';
-const PATREON_REDIRECT_URI = `${PATREON_AUTH_SERVICE_URL}/.netlify/functions/patreon-callback`;
-
-const PATREON_API_BASE_URL = 'https://www.patreon.com/api/oauth2/v2';
-const PATREON_OAUTH_AUTHORIZE_URL = 'https://www.patreon.com/oauth2/authorize';
-// FIXED: Removed invalid 'campaigns.members' scope
-const PATREON_SCOPE = 'identity identity[email] identity.memberships campaigns';
-
-// Client secret is now removed from frontend as it will be used by Netlify Function.
-let patreonAccessToken = null;
-let patreonRefreshToken = null; // Store refresh token
-let patreonTokenExpiresAt = null; // Store expiration timestamp
-let isPaidPatreonMember = false;
-
-    // Get references to Patreon UI elements
-    const patreonLoginBtn = document.getElementById('patreonLoginBtn');
-    const patreonStatusDiv = document.getElementById('patreonStatus');
-
-    // --- Condition Icon Mapping ---
-    const conditionIconMap = {
-        'Blinded': 'eye-off',
-        'Charmed': 'heart',
-        'Deafened': 'ear-off',
-        'Frightened': 'ghost',
-        'Grappled': 'grip',
-        'Incapacitated': 'hand',
-        'Invisible': 'eye-off',
-        'Paralyzed': 'zap',
-        'Petrified': 'rocking-horse',
-        'Poisoned': 'droplet',
-        'Prone': 'person-standing',
-        'Restrained': 'hand-metal',
-        'Stunned': 'star',
-        'Unconscious': 'moon',
-        'Exhaustion': 'thermometer',
-        'default': 'alert-circle' // Fallback icon
-    };
-
-
     // --- Utility Functions ---
 
-    /**
-     * Opens a generic message modal.
-     * @param {string} title - The title of the message.
-     * @param {string} message - The message content.
-     */
+    // Function to open a modal
+    function openModal(modalElement) {
+        modalElement.style.display = 'block';
+        // Add a class to body to prevent scrolling
+        document.body.classList.add('modal-open');
+    }
+
+    // Function to close a modal
+    function closeModal(modalElement) {
+        modalElement.style.display = 'none';
+        // Remove the class from body
+        document.body.classList.remove('modal-open');
+    }
+
+    // Generic Message Modal
     function openMessageModal(title, message) {
         messageModalTitle.textContent = title;
         messageModalText.textContent = message;
-        modalMessage.style.display = 'flex';
+        openModal(modalMessage);
     }
 
-    /**
-     * Opens a generic confirmation modal.
-     * @param {string} title - The title of the confirmation.
-     * @param {string} message - The confirmation message.
-     * @param {Function} onConfirm - Callback function if user confirms.
-     * @param {Function} onCancel - Callback function if user cancels.
-     */
+    // Confirmation Modal
     function openConfirmationModal(title, message, onConfirm, onCancel) {
         confirmationModalTitle.textContent = title;
         confirmationModalText.textContent = message;
-        modalConfirmation.style.display = 'flex';
+        openModal(modalClearConfirmation);
 
-        const confirmHandler = () => {
+        // Clear previous listeners to prevent multiple calls
+        confirmationModalConfirmBtn.onclick = null;
+        confirmationModalCancelBtn.onclick = null;
+
+        confirmationModalConfirmBtn.onclick = () => {
             onConfirm();
-            closeModal(modalConfirmation);
-            confirmationModalConfirmBtn.removeEventListener('click', confirmHandler);
-            confirmationModalCancelBtn.removeEventListener('click', cancelHandler);
+            closeModal(modalClearConfirmation);
         };
-
-        const cancelHandler = () => {
+        confirmationModalCancelBtn.onclick = () => {
             onCancel();
-            closeModal(modalConfirmation);
-            confirmationModalConfirmBtn.removeEventListener('click', confirmHandler);
-            confirmationModalCancelBtn.removeEventListener('click', cancelHandler);
+            closeModal(modalClearConfirmation);
         };
-
-        confirmationModalConfirmBtn.addEventListener('click', confirmHandler);
-        confirmationModalCancelBtn.addEventListener('click', cancelHandler);
     }
 
 
-    /**
-     * Fetches all monster names and their slugs from the D&D 5e API.
-     * Stores them in the `allMonsters` array for search suggestions.
-     */
-    async function fetchAllMonsters() {
-        try {
-            const response = await fetch(`${DND_API_BASE_URL}/monsters`);
-            const data = await response.json();
-            allMonsters = data.results.map(monster => ({
-                name: monster.name,
-                slug: monster.index
-            }));
-            console.log('Fetched all monster names:', allMonsters.length);
-        } catch (error) {
-            console.error('Error fetching monster list:', error);
-            openMessageModal('Error', 'Error fetching monster list. Try again later.');
+    // --- Data Persistence (Local Storage) ---
+    function saveEncounter() {
+        localStorage.setItem('combatants', JSON.stringify(combatants));
+        localStorage.setItem('currentTurnIndex', currentTurnIndex.toString());
+        localStorage.setItem('currentRound', currentRound.toString());
+    }
+
+    function loadEncounter() {
+        const savedCombatants = localStorage.getItem('combatants');
+        const savedTurnIndex = localStorage.getItem('currentTurnIndex');
+        const savedRound = localStorage.getItem('currentRound');
+
+        if (savedCombatants) {
+            combatants = JSON.parse(savedCombatants);
         }
-    }
-
-    /**
-     * Fetches detailed information for a specific monster using its slug.
-     * @param {string} slug - The index (slug) of the monster.
-     * @returns {Object|null} The monster's detailed data or null if an error occurs.
-     */
-    async function fetchMonsterDetails(slug) {
-        try {
-            const response = await fetch(`${DND_API_BASE_URL}/monsters/${slug}`);
-            const data = await response.json();
-            return data;
-        } catch (error) {
-            console.error(`Error fetching details for ${slug}:`, error);
-            openMessageModal('Error', `Error fetching details for ${slug}.`);
-            return null;
+        if (savedTurnIndex !== null) {
+            currentTurnIndex = parseInt(savedTurnIndex);
         }
-    }
-
-    /**
-     * Fetches all conditions and their detailed descriptions from the D&D 5e API.
-     * Stores them in the `allConditions` array.
-     */
-    async function fetchAllConditions() {
-        try {
-            const response = await fetch(`${DND_API_BASE_URL}/conditions`);
-            const data = await response.json();
-            allConditions = []; // Clear previous data
-            for (const cond of data.results) {
-                const detailResponse = await fetch(`${DND_API_BASE_URL}/conditions/${cond.index}`);
-                const detailData = await detailResponse.json();
-                allConditions.push({
-                    name: detailData.name,
-                    slug: detailData.index,
-                    description: detailData.desc.join('\n\n') // Join array of strings into one with double newline
-                });
-            }
-            console.log('Fetched all condition details:', allConditions.length);
-            renderConditionsForSelection(); // Render conditions in the new modal after fetching
-        } catch (error) {
-            console.error('Error fetching conditions:', error);
-            openMessageModal('Error', 'Error fetching conditions. Try again later.');
+        if (savedRound !== null) {
+            currentRound = parseInt(savedRound);
         }
-    }
-
-    function loginWithPatreon() {
-    // Generate a random string for CSRF protection
-    const state = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
-    localStorage.setItem('patreon_oauth_state', state);
-
-    // DEBUG: Show exactly what redirect URI is being used
-    alert('Debug - PATREON_REDIRECT_URI: ' + PATREON_REDIRECT_URI);
-    
-    const authUrl = `${PATREON_OAUTH_AUTHORIZE_URL}?response_type=code&client_id=${PATREON_CLIENT_ID}&redirect_uri=${encodeURIComponent(PATREON_REDIRECT_URI)}&scope=${encodeURIComponent(PATREON_SCOPE)}&state=${state}`;
-    
-    // DEBUG: Show the full auth URL
-    console.log('Full auth URL:', authUrl);
-    
-    window.location.href = authUrl;
-}
-
-    /**
-     * Generates a unique ID for combatants.
-     * @returns {string} A unique ID.
-     */
-    function generateUniqueId() {
-        return '_' + Math.random().toString(36).substr(2, 9);
-    }
-
-    /**
-     * Adds a combatant to the global combatants array and re-renders the list.
-     * Handles instance numbering for monsters.
-     * @param {Object} combatantData - Data for the new combatant.
-     */
-    function addCombatant(combatantData) {
-        // Handle multiple instances of the same monster name
-        let instanceCount = 1;
-        if (combatantData.isMonster) {
-            const existingInstances = combatants.filter(c => c.name === combatantData.name && c.isMonster);
-            if (existingInstances.length > 0) {
-                instanceCount = Math.max(...existingInstances.map(c => c.instance || 0)) + 1;
-            }
-        }
-
-        const newCombatant = {
-            id: combatantData.id || generateUniqueId(), // Allow loading existing ID
-            name: combatantData.name,
-            maxHp: combatantData.maxHp,
-            currentHp: combatantData.currentHp !== undefined ? combatantData.currentHp : combatantData.maxHp, // Retain current HP if loading
-            tempHp: combatantData.tempHp !== undefined ? combatantData.tempHp : 0, // Retain temp HP if loading
-            ac: combatantData.ac,
-            initiative: combatantData.initiative !== undefined ? combatantData.initiative : null, // Retain initiative if loading
-            initiativeBonus: combatantData.initiativeBonus || 0,
-            isPC: combatantData.isPC || false,
-            isMonster: combatantData.isMonster || false,
-            conditions: combatantData.conditions || [], // Retain conditions if loading
-            deathSaves: combatantData.isPC ? (combatantData.deathSaves || { successes: 0, failures: 0 }) : null,
-            instance: instanceCount, // For unique numbering of monsters
-            // Store full monster data if available (or custom data)
-            monsterDetails: combatantData.monsterDetails || null,
-            // Custom stats for imported JSON combatants
-            stats: combatantData.stats || null,
-            description: combatantData.description || '',
-            features: combatantData.features || [],
-            actions: combatantData.actions || []
-        };
-        combatants.push(newCombatant);
         renderCombatants();
-        saveEncounter(); // Save the combatants whenever one is added
+        updateTurnDisplay();
     }
 
-    /**
-     * Renders all combatants in the list, applying appropriate styling and event listeners.
-     */
+    // --- Combatant Management ---
+
+    function generateUniqueId() {
+        return Date.now().toString(36) + Math.random().toString(36).substr(2);
+    }
+
+    function addCombatant(name, initiative, hp, ac, isPC = false) {
+        const id = generateUniqueId();
+        combatants.push({ id, name, initiative: parseInt(initiative), hp: hp !== '' ? parseInt(hp) : null, ac: ac !== '' ? parseInt(ac) : null, isPC, conditions: [] });
+        sortCombatants();
+        renderCombatants();
+        saveEncounter();
+        openMessageModal('Combatant Added', `${name} added to combat!`);
+    }
+
+    function sortCombatants() {
+        combatants.sort((a, b) => {
+            // Sort by initiative (descending)
+            if (b.initiative !== a.initiative) {
+                return b.initiative - a.initiative;
+            }
+            // Then by PC first, then monster
+            if (a.isPC && !b.isPC) return -1;
+            if (!a.isPC && b.isPC) return 1;
+            // Then by name (alphabetical)
+            return a.name.localeCompare(b.name);
+        });
+    }
+
     function renderCombatants() {
-        combatantList.innerHTML = ''; // Clear existing list
+        combatantsList.innerHTML = ''; // Clear current list
         if (combatants.length === 0) {
-            combatantList.innerHTML = '<p style="text-align: center; color: var(--color-text-muted); padding: 20px;">No combatants yet. Add some!</p>';
+            combatantsList.innerHTML = '<p class="empty-list-message">No combatants yet. Add PCs or Monsters!</p>';
             return;
         }
 
         combatants.forEach((combatant, index) => {
-            const li = document.createElement('li');
-            li.className = 'combatant-row';
+            const combatantDiv = document.createElement('div');
+            combatantDiv.classList.add('combatant-item', 'card');
             if (index === currentTurnIndex) {
-                li.classList.add('current-turn');
+                combatantDiv.classList.add('current-turn');
             }
-            // Only apply 'dead' class if HP is 0 or less AND it's a monster OR a PC with 3+ death save failures
-            if (combatant.currentHp <= 0 && (!combatant.isPC || (combatant.deathSaves && combatant.deathSaves.failures >= 3))) {
-                li.classList.add('dead');
-            } else if (combatant.currentHp <= 0 && combatant.isPC && combatant.deathSaves && combatant.deathSaves.failures < 3) {
-                li.classList.add('dying'); // For PCs who are down but not dead
-            }
-
-            li.dataset.id = combatant.id; // Unique ID for each combatant
-
-            // Calculate HP status class
-            let hpClass = '';
-            if (combatant.currentHp <= 0) {
-                if (combatant.isPC && combatant.deathSaves && combatant.deathSaves.successes < 3 && combatant.deathSaves.failures < 3) {
-                    hpClass = 'dying'; // PC is dying but not dead yet
-                } else {
-                    hpClass = 'dead'; // Monster or PC with 3 failures
-                }
+            if (combatant.isPC) {
+                combatantDiv.classList.add('pc');
             } else {
-                const hpPercentage = (combatant.currentHp / combatant.maxHp) * 100;
-                if (hpPercentage >= 75) {
-                    hpClass = 'healthy';
-                } else if (hpPercentage >= 50) {
-                    hpClass = 'wounded';
-                } else if (hpPercentage >= 25) {
-                    hpClass = 'bloodied';
-                } else {
-                    hpClass = 'critical';
-                }
+                combatantDiv.classList.add('monster');
             }
 
-            // Determine if combatant name should be clickable for monster details
-            const nameHtml = combatant.isMonster && (combatant.monsterDetails || combatant.stats) ?
-                `<span class="combatant-name clickable-monster-name" data-id="${combatant.id}" title="View full monster details">${combatant.name}</span>` :
-                `<span class="combatant-name">${combatant.name}</span>`;
-
-            // Generate stat rolls for monsters
-            let statRollsHtml = '';
-            const statsToDisplay = combatant.monsterDetails ? {
-                STR: combatant.monsterDetails.strength,
-                DEX: combatant.monsterDetails.dexterity,
-                CON: combatant.monsterDetails.constitution,
-                INT: combatant.monsterDetails.intelligence,
-                WIS: combatant.monsterDetails.wisdom,
-                CHA: combatant.monsterDetails.charisma
-            } : combatant.stats; // Use custom stats if available (from imported JSON)
-
-            if (statsToDisplay) {
-                statRollsHtml = '<div class="combatant-stats-rolls">';
-                for (const statName in statsToDisplay) {
-                    const statValue = statsToDisplay[statName];
-                    if (statValue !== undefined && statValue !== null) {
-                        const modifier = Math.floor((statValue - 10) / 2);
-                        const modifierSign = modifier >= 0 ? '+' : '';
-                        statRollsHtml += `
-                            <span class="stat-item">
-                                <strong>${statName}:</strong> ${statValue} (${modifierSign}${modifier})
-                                <button class="stat-roll-button" data-id="${combatant.id}" data-stat="${statName}" data-modifier="${modifier}" title="Roll 1d20 for ${statName}"><i data-lucide="dice-5"></i></button>
-                            </span>
-                        `;
-                    }
-                }
-                statRollsHtml += '</div>';
-            }
-
-
-            li.innerHTML = `
+            combatantDiv.innerHTML = `
                 <div class="combatant-info">
-                    ${nameHtml}
-                    <span class="instance-number" style="${combatant.instance > 1 ? '' : 'display:none;'}"> #${combatant.instance}</span>
-                    <span class="combatant-ac" title="Armor Class">AC: <span class="ac-display">${combatant.ac}</span></span>
-                    <span class="combatant-hp" title="Current Hit Points / Maximum Hit Points ${combatant.tempHp > 0 ? `(Includes Temporary HP)` : ''}">HP: <span class="hp-display ${hpClass}">${combatant.currentHp}</span> / ${combatant.maxHp} ${combatant.tempHp > 0 ? ` (<span class="temp-hp-display" title="Temporary Hit Points">${combatant.tempHp}</span> Temp)` : ''}</span>
-                    <span class="combatant-initiative-score" title="Initiative Score">Init: <input type="number" class="initiative-input" value="${combatant.initiative !== null ? combatant.initiative : ''}" placeholder="Roll Init" data-id="${combatant.id}" title="Enter or roll initiative for this combatant"></span>
-                    ${statRollsHtml}
-                </div>
-                <div class="combatant-hp-controls">
-                    <div class="hp-control-titles">
-                        <span class="hp-control-title">DMG</span>
-                        <span class="hp-control-title">HP</span>
-                        <span class="hp-control-title">TEMP</span>
+                    <div class="combatant-name-initiative">
+                        <span class="name">${combatant.name}</span>
+                        <span class="initiative">(Init: ${combatant.initiative})</span>
                     </div>
-                    <input type="number" class="hp-input" placeholder="Amount" data-id="${combatant.id}" title="Enter amount for HP actions">
-                    <div class="hp-action-buttons-row">
-                        <button class="hp-action-button damage" data-id="${combatant.id}" title="Apply damage"><i data-lucide="sword"></i></button>
-                        <button class="hp-action-button heal" data-id="${combatant.id}" title="Apply healing"><i data-lucide="plus"></i></button>
-                        <button class="hp-action-button temp" data-id="${combatant.id}" title="Apply temporary HP"><i data-lucide="shield"></i></button>
+                    <div class="combatant-stats">
+                        ${combatant.hp !== null ? `<span class="hp">HP: ${combatant.hp}</span>` : ''}
+                        ${combatant.ac !== null ? `<span class="ac">AC: ${combatant.ac}</span>` : ''}
                     </div>
-                </div>
-                <div class="combatant-conditions">
-                    <h4>Conditions</h4>
-                    <div class="conditions-list-container"></div>
+                    <div class="combatant-conditions" id="conditions-${combatant.id}">
+                        ${combatant.conditions.map(c => `
+                            <span class="condition-tag" data-condition-id="${c.id}" data-condition-name="${c.name}" data-condition-duration="${c.duration}">
+                                ${c.name} ${c.duration !== null ? `(${c.duration})` : ''}
+                                <i data-lucide="x" class="remove-condition-btn" data-combatant-id="${combatant.id}" data-condition-id="${c.id}"></i>
+                            </span>
+                        `).join('')}
+                    </div>
                 </div>
                 <div class="combatant-actions">
-                    <h4>Actions</h4>
-                    <button class="combatant-action-button roll-init-btn" data-id="${combatant.id}" data-init-bonus="${combatant.initiativeBonus}" title="Roll initiative for this combatant"><i data-lucide="dice-5"></i> Roll Init</button>
-                    <button class="combatant-action-button add-condition-btn" data-id="${combatant.id}" title="Add a condition"><i data-lucide="thermometer"></i> Add Condition</button>
-                    <button class="combatant-action-button kill" data-id="${combatant.id}" title="Set HP to 0 (Kill)"><i data-lucide="skull"></i> Kill</button>
-                    <button class="combatant-action-button edit" data-id="${combatant.id}" title="Edit combatant details"><i data-lucide="edit"></i> Edit</button>
-                    <button class="combatant-action-button remove" data-id="${combatant.id}" title="Remove combatant from list"><i data-lucide="x-circle"></i> Remove</button>
+                    <button class="button button-edit edit-combatant-btn" data-id="${combatant.id}"><i data-lucide="edit"></i></button>
+                    <button class="button button-danger remove-combatant-btn" data-id="${combatant.id}"><i data-lucide="trash-2"></i></button>
                 </div>
-                ${combatant.isPC && combatant.currentHp <= 0 ? `
-                    <div class="death-saves">
-                        <h4>Death Saves</h4>
-                        <div class="death-save-row">
-                            Successes:
-                            <span class="death-save-box ${combatant.deathSaves && combatant.deathSaves.successes >= 1 ? 'success' : ''}" data-id="${combatant.id}" data-type="success" data-index="0" title="Death Save Success 1"></span>
-                            <span class="death-save-box ${combatant.deathSaves && combatant.deathSaves.successes >= 2 ? 'success' : ''}" data-id="${combatant.id}" data-type="success" data-index="1" title="Death Save Success 2"></span>
-                            <span class="death-save-box ${combatant.deathSaves && combatant.deathSaves.successes >= 3 ? 'success' : ''}" data-id="${combatant.id}" data-type="success" data-index="2" title="Death Save Success 3"></span>
-                        </div>
-                        <div class="death-save-row">
-                            Failures:
-                            <span class="death-save-box ${combatant.deathSaves && combatant.deathSaves.failures >= 1 ? 'failure' : ''}" data-id="${combatant.id}" data-type="failure" data-index="0" title="Death Save Failure 1"></span>
-                            <span class="death-save-box ${combatant.deathSaves && combatant.deathSaves.failures >= 2 ? 'failure' : ''}" data-id="${combatant.id}" data-type="failure" data-index="1" title="Death Save Failure 2"></span>
-                            <span class="death-save-box ${combatant.deathSaves && combatant.deathSaves.failures >= 3 ? 'failure' : ''}" data-id="${combatant.id}" data-type="failure" data-index="2" title="Death Save Failure 3"></span>
-                        </div>
-                    </div>
-                ` : ''}
             `;
-            combatantList.appendChild(li);
-
-            // Re-create Lucide icons within the newly added li element
-            lucide.createIcons({
-                container: li
-            });
-
-            // Add event listeners for Initiative input (change event)
-            li.querySelector('.initiative-input').addEventListener('change', (e) => {
-                const id = e.target.dataset.id;
-                const newInitiative = parseInt(e.target.value);
-                const combatant = combatants.find(c => c.id === id);
-                if (combatant && !isNaN(newInitiative)) {
-                    combatant.initiative = newInitiative;
-                }
-                saveEncounter();
-            });
-
-            // Add event listener for clickable monster name
-            const clickableName = li.querySelector('.clickable-monster-name');
-            if (clickableName) {
-                clickableName.addEventListener('click', () => showMonsterDetailsModal(combatant.id));
-            }
-
-            // Add event listeners for stat roll buttons
-            li.querySelectorAll('.stat-roll-button').forEach(button => {
-                button.addEventListener('click', (e) => {
-                    const statName = e.currentTarget.dataset.stat;
-                    const modifier = parseInt(e.currentTarget.dataset.modifier);
-                    const roll = rollD20();
-                    const total = roll + modifier;
-                    rollDiceResult(`${statName} Roll: ${roll} ${modifier >= 0 ? '+' : ''}${modifier} = ${total}`);
-                });
-            });
-
-
-            // Render conditions for each combatant
-            const conditionsListContainer = li.querySelector('.conditions-list-container');
-            combatant.conditions.forEach(condition => {
-                const conditionIcon = document.createElement('div');
-                conditionIcon.className = 'condition-icon';
-                conditionIcon.dataset.conditionName = condition.name;
-                conditionIcon.dataset.combatantId = combatant.id;
-
-                // Set tooltip for condition description (first paragraph)
-                const fullCondition = allConditions.find(c => c.name === condition.name);
-                if (fullCondition && fullCondition.description) {
-                    conditionIcon.title = `${fullCondition.name}: ${fullCondition.description.split('\n\n')[0]}`;
-                } else {
-                    conditionIcon.title = condition.name;
-                }
-
-                // Use Lucide icon if mapped, otherwise use first letter
-                const iconName = conditionIconMap[condition.name] || conditionIconMap['default'];
-                if (iconName) {
-                    conditionIcon.innerHTML = `<i data-lucide="${iconName}"></i>`;
-                } else {
-                    conditionIcon.textContent = condition.name.charAt(0).toUpperCase();
-                }
-
-                // Add duration if present
-                if (condition.duration !== null) {
-                    const durationSpan = document.createElement('span');
-                    durationSpan.className = 'duration';
-                    durationSpan.textContent = condition.duration;
-                    conditionIcon.appendChild(durationSpan);
-                }
-
-                // Add remove button ('x')
-                const removeBtn = document.createElement('span');
-                removeBtn.className = 'condition-remove-btn';
-                removeBtn.innerHTML = '<i data-lucide="x"></i>'; // Use Lucide icon for remove
-                removeBtn.dataset.combatantId = combatant.id;
-                removeBtn.dataset.conditionName = condition.name;
-                removeBtn.title = `Remove ${condition.name}`;
-                conditionIcon.appendChild(removeBtn);
-
-                conditionsListContainer.appendChild(conditionIcon);
-            });
-            // Re-create Lucide icons within the newly added condition icons
-            lucide.createIcons({
-                container: conditionsListContainer
-            });
+            combatantsList.appendChild(combatantDiv);
         });
-        updateRoundTurnDisplay();
+        lucide.createIcons(); // Re-render Lucide icons for newly added elements
     }
 
-    /**
-     * Updates the displayed round and current turn information.
-     */
-    function updateRoundTurnDisplay() {
+    function updateTurnDisplay() {
         currentRoundSpan.textContent = currentRound;
         if (currentTurnIndex !== -1 && combatants[currentTurnIndex]) {
-            currentTurnSpan.textContent = combatants[currentTurnIndex].name + (combatants[currentTurnIndex].instance > 1 ? ` #${combatants[currentTurnIndex].instance}` : '');
+            currentTurnSpan.textContent = combatants[currentTurnIndex].name;
         } else {
             currentTurnSpan.textContent = 'None';
         }
     }
 
-    // --- Local Storage Management (for current encounter auto-save) ---
-
-    /**
-     * Saves the current combat state (combatants, round, turn index) to local storage.
-     * This is for auto-saving the *current* encounter, not named parties.
-     */
-    function saveEncounter() {
-        localStorage.setItem('currentCombatants', JSON.stringify(combatants));
-        localStorage.setItem('currentRound', currentRound.toString());
-        localStorage.setItem('currentTurnIndex', currentTurnIndex.toString());
-    }
-
-    /**
-     * Loads the combat state from local storage.
-     */
-    function loadEncounter() {
-        const savedCombatants = localStorage.getItem('currentCombatants');
-        const savedRound = localStorage.getItem('currentRound');
-        const savedTurnIndex = localStorage.getItem('currentTurnIndex');
-
-        if (savedCombatants) {
-            combatants = JSON.parse(savedCombatants);
-            currentRound = parseInt(savedRound) || 1;
-            currentTurnIndex = parseInt(savedTurnIndex) || -1;
-            renderCombatants();
-        }
-    }
-
-    /**
-     * Saves the current list of combatants as a named party template to a JSON file.
-     * @param {Array<Object>} partyCombatants - The array of combatants to save.
-     */
-    function savePartyToFile(partyCombatants) {
-        openConfirmationModal(
-            'Save Party',
-            'Enter a filename for your party (e.g., MyAwesomeParty):',
-            () => {
-                const filename = prompt('Enter filename:'); // Using prompt for simplicity here, could be a modal input
-                if (!filename || filename.trim() === '') {
-                    openMessageModal('Error', 'Filename cannot be empty.');
-                    return;
-                }
-
-                // Clean up combatants data before saving party (remove initiative, current HP, conditions etc.)
-                const cleanedCombatants = partyCombatants.map(c => ({
-                    name: c.name,
-                    maxHp: c.maxHp,
-                    ac: c.ac,
-                    initiativeBonus: c.initiativeBonus,
-                    isPC: c.isPC,
-                    isMonster: c.isMonster,
-                    // Only save essential monster details for re-fetching or custom display
-                    monsterDetails: c.monsterDetails ? {
-                        name: c.monsterDetails.name,
-                        index: c.monsterDetails.index,
-                        size: c.monsterDetails.size,
-                        type: c.monsterDetails.type,
-                        alignment: c.monsterDetails.alignment,
-                        armor_class: c.monsterDetails.armor_class,
-                        hit_points: c.monsterDetails.hit_points,
-                        hit_points_roll: c.monsterDetails.hit_points_roll,
-                        speed: c.monsterDetails.speed,
-                        strength: c.monsterDetails.strength,
-                        dexterity: c.monsterDetails.dexterity,
-                        constitution: c.monsterDetails.constitution,
-                        intelligence: c.monsterDetails.intelligence,
-                        wisdom: c.wisdom,
-                        charisma: c.charisma,
-                        proficiencies: c.proficiencies,
-                        damage_vulnerabilities: c.damage_vulnerabilities,
-                        damage_resistances: c.damage_resistances,
-                        damage_immunities: c.damage_immunities,
-                        condition_immunities: c.condition_immunities,
-                        senses: c.senses,
-                        languages: c.languages,
-                        challenge_rating: c.challenge_rating,
-                        xp: c.xp,
-                        special_abilities: c.special_abilities,
-                        actions: c.actions,
-                        legendary_actions: c.legendary_actions,
-                        reactions: c.reactions
-                    } : null,
-                    stats: c.stats || null, // Also save custom stats if present
-                    description: c.description || '',
-                    features: c.features || [],
-                    actions: c.actions || []
-                }));
-
-                const dataStr = JSON.stringify(cleanedCombatants, null, 2);
-                const blob = new Blob([dataStr], { type: 'application/json' });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = `${filename.trim().replace(/\s/g, '_')}.json`; // Sanitize filename
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                URL.revokeObjectURL(url);
-                openMessageModal('Success', `Current party saved to ${a.download}!`);
-            },
-            () => {
-                // User cancelled
-            }
-        );
-    }
-
-    /**
-     * Loads a party from a selected JSON file.
-     * @param {File} file - The JSON file to load.
-     */
-    function loadPartyFromFile(file) {
-        const reader = new FileReader();
-        reader.onload = (event) => {
-            try {
-                const loadedCombatants = JSON.parse(event.target.result);
-                if (!Array.isArray(loadedCombatants)) {
-                    openMessageModal('Error', 'Invalid file format. Please select a JSON file containing an array of combatants.');
-                    return;
-                }
-
-                if (combatants.length > 0) {
-                    openConfirmationModal(
-                        'Load Party',
-                        'Loading a new party will clear the current encounter. Continue?',
-                        () => {
-                            combatants = []; // Clear existing combatants
-                            currentRound = 1;
-                            currentTurnIndex = -1;
-
-                            loadedCombatants.forEach(c => {
-                                // Re-add with new unique IDs and fresh state
-                                addCombatant({
-                                    name: c.name,
-                                    maxHp: c.maxHp,
-                                    ac: c.ac,
-                                    initiativeBonus: c.initiativeBonus,
-                                    isPC: c.isPC,
-                                    isMonster: c.isMonster,
-                                    monsterDetails: c.monsterDetails || null, // Preserve monster details if present
-                                    stats: c.stats || null, // Preserve custom stats if present
-                                    description: c.description || '',
-                                    features: c.features || [],
-                                    actions: c.actions || []
-                                });
-                            });
-                            renderCombatants();
-                            saveEncounter(); // Save the newly loaded party as current encounter
-                            openMessageModal('Success', 'Party loaded successfully!');
-                        },
-                        () => {
-                            // User cancelled
-                        }
-                    );
-                } else {
-                    loadedCombatants.forEach(c => {
-                        addCombatant({
-                            name: c.name,
-                            maxHp: c.maxHp,
-                            ac: c.ac,
-                            initiativeBonus: c.initiativeBonus,
-                            isPC: c.isPC,
-                            isMonster: c.isMonster,
-                            monsterDetails: c.monsterDetails || null,
-                            stats: c.stats || null,
-                            description: c.description || '',
-                            features: c.features || [],
-                            actions: c.actions || []
-                        });
-                    });
-                    renderCombatants();
-                    saveEncounter();
-                    openMessageModal('Success', 'Party loaded successfully!');
-                }
-            } catch (e) {
-                openMessageModal('Error', 'Error parsing JSON file. Please ensure it is a valid JSON format.');
-                console.error('Error loading party file:', e);
-            }
-        };
-        reader.onerror = () => {
-            openMessageModal('Error', 'Error reading file.');
-        };
-        reader.readAsText(file);
-    }
-
-    /**
-     * Copies a JSON template for a custom combatant to the clipboard.
-     */
-    function copyJsonTemplate() {
-        const prompt = `Build a monster using the JSON template below based on my description. Ask me to describe my creature briefly and what level party they are facing as well as what risk you want them to pose to help flesh it out, and then return only the completed JSON with no added fields that aren't currently present - no explanations or extra text. Provide the Json in a codeblock.
-
-Once you have provided the JSON - Ask the player to return to the Initiative tracker to upload it and thank them for being a patreon/jimpeccable Supporter.\n\n`;
-
-        const template = {
-            "name": "Custom Combatant Name",
-            "maxHp": 50,
-            "ac": 15,
-            "initiativeBonus": 2,
-            "isPC": false,
-            "isMonster": true,
-            "description": "A brief description of your custom combatant.",
-            "features": [
-                {
-                    "name": "Feature Name",
-                    "description": "Description of the feature's effect."
-                },
-                {
-                    "name": "Another Feature",
-                    "description": "This combatant has another cool ability."
-                }
-            ],
-            "actions": [
-                {
-                    "name": "Attack",
-                    "description": "Melee Weapon Attack: +5 to hit, reach 5 ft., one target. Hit: 1d8 + 3 slashing damage."
-                }
-            ],
-            "stats": {
-                "strength": 10,
-                "dexterity": 14,
-                "constitution": 12,
-                "intelligence": 8,
-                "wisdom": 10,
-                "charisma": 10
-            }
-        };
-
-        const jsonString = JSON.stringify(template, null, 2);
-
-        const fullContent = prompt + "```json\n" + jsonString + "\n```";
-
-        // Use execCommand for broader compatibility
-        const textarea = document.createElement('textarea');
-        textarea.value = fullContent;
-        document.body.appendChild(textarea);
-        textarea.select();
-
-        try {
-            const successful = document.execCommand('copy');
-            const msg = successful ? 'AI prompt and JSON copied to clipboard!' : 'Failed to copy content.';
-            openMessageModal('Copy JSON', msg);
-        } catch (err) {
-            console.error('Fallback: unable to copy', err);
-            openMessageModal('Copy JSON', 'Failed to copy content. Please copy manually:\n\n' + fullContent);
-        } finally {
-            document.body.removeChild(textarea);
-        }
-    }
-
-
-    /**
-     * Imports a single combatant from a selected JSON file.
-     * @param {File} file - The JSON file containing a single combatant object.
-     */
-    function importJsonCombatant(file) {
-        const reader = new FileReader();
-        reader.onload = (event) => {
-            try {
-                const combatantData = JSON.parse(event.target.result);
-                // Basic validation for combatant structure
-                if (!combatantData.name || !combatantData.maxHp || !combatantData.ac) {
-                    openMessageModal('Error', 'Invalid combatant JSON. Missing required fields (name, maxHp, ac).');
-                    return;
-                }
-                addCombatant(combatantData);
-                openMessageModal('Success', `${combatantData.name} imported successfully!`);
-            } catch (e) {
-                openMessageModal('Error', 'Error parsing JSON file. Please ensure it is a valid JSON object.');
-                console.error('Error importing combatant file:', e);
-            }
-        };
-        reader.onerror = () => {
-            openMessageModal('Error', 'Error reading file.');
-        };
-        reader.readAsText(file);
-    }
-
-
-    // --- Core Combat Logic Functions ---
-
-    /**
-     * Rolls a d20.
-     * @returns {number} A random number between 1 and 20.
-     */
-    function rollD20() {
-        return Math.floor(Math.random() * 20) + 1;
-    }
-
-    /**
-     * Displays the result of a dice roll in the `rollResultDiv`.
-     * @param {string} resultText - The text to display in the result area.
-     */
-    function rollDiceResult(resultText) {
-        rollResultDiv.textContent = resultText;
-    }
-
-    /**
-     * Parses and rolls dice notation (e.g., "2d6+3", "1d20-1").
-     * Displays the result in the `rollResultDiv`.
-     * @param {string} notation - The dice notation string.
-     */
-    function rollDice(notation) {
-        notation = notation.toLowerCase().replace(/\s/g, ''); // Clean input
-
-        const match = notation.match(/^(\d*)d(\d+)([\+\-]\d+)?$/);
-
-        if (!match) {
-            rollDiceResult('Invalid dice notation. Use format like 1d20, 2d6+3.');
-            return;
-        }
-
-        const numDice = parseInt(match[1] || '1'); // Default to 1 die if number omitted (e.g., "d20")
-        const dieSize = parseInt(match[2]);
-        const modifier = match[3] ? parseInt(match[3]) : 0;
-
-        if (numDice <= 0 || dieSize <= 0) {
-            rollDiceResult('Number of dice and die size must be positive.');
-            return;
-        }
-        if (numDice > 100) { // Prevent excessive rolls for performance/sanity
-            rollDiceResult('Max 100 dice allowed for single roll.');
-            return;
-        }
-
-        let total = 0;
-        const rolls = [];
-
-        for (let i = 0; i < numDice; i++) {
-            const roll = Math.floor(Math.random() * dieSize) + 1;
-            rolls.push(roll);
-            total += roll;
-        }
-
-        let resultText = `Rolls: ${rolls.join(', ')}`;
-        if (modifier !== 0) {
-            resultText += ` Modifier: ${modifier > 0 ? '+' : ''}${modifier}`;
-            total += modifier;
-        }
-        resultText += ` = Total: ${total}`;
-
-        rollDiceResult(resultText);
-    }
-
-    /**
-     * Sorts combatants by initiative (descending), then initiative bonus (descending), then name (ascending).
-     * Resets the current turn after sorting.
-     */
-    function sortCombatants() {
-        combatants.sort((a, b) => {
-            // Primary sort by initiative (descending)
-            if (b.initiative !== a.initiative) {
-                return b.initiative - a.initiative;
-            }
-            // Secondary sort by initiative bonus (descending)
-            if (b.initiativeBonus !== a.initiativeBonus) {
-                return b.initiativeBonus - a.initiativeBonus;
-            }
-            // Tertiary sort by name (ascending)
-            return a.name.localeCompare(b.name);
-        });
-        currentTurnIndex = -1; // Reset turn index after sorting
-        renderCombatants();
-        saveEncounter();
-    }
-
-    /**
-     * Rolls initiative for all monsters that currently don't have an initiative score.
-     */
-    function rollAllMonsterInitiative() {
-        let rolledCount = 0;
-        combatants.forEach(combatant => {
-            if (combatant.isMonster && (combatant.initiative === null || isNaN(combatant.initiative))) {
-                const rollResult = rollD20();
-                combatant.initiative = rollResult + combatant.initiativeBonus;
-                rolledCount++;
-            }
-        });
-
-        if (rolledCount > 0) {
-            openMessageModal('Monster Initiative Rolled', `${rolledCount} monster(s) had their initiative rolled.`);
-            sortCombatants(); // Re-sort after rolling
-        } else {
-            openMessageModal('No Monsters to Roll', 'All monsters already have an initiative score, or no monsters are present.');
-        }
-    }
-
-    /**
-     * Starts the initiative, sorting combatants and highlighting the first one.
-     * Prompts if any combatant is missing initiative.
-     */
-    function startInitiative() {
-        if (combatants.length === 0) {
-            openMessageModal('Cannot Start Combat', 'Add combatants before starting initiative!');
-            return;
-        }
-
-        const missingInitiative = combatants.some(c => c.initiative === null || isNaN(c.initiative));
-        if (missingInitiative) {
-            openMessageModal('Missing Initiative', 'Some combatants do not have an initiative score. Please roll or set initiative for all combatants before starting.');
-            return;
-        }
-
-        sortCombatants(); // Ensure sorted
-        currentRound = 1;
-        currentTurnIndex = 0; // Start with the first combatant
-        renderCombatants();
-        saveEncounter();
-        openMessageModal('Combat Started', 'First turn begins!');
-    }
-
-    /**
-     * Advances the combat to the next turn. Handles round progression and condition durations.
-     */
     function nextTurn() {
         if (combatants.length === 0) {
-            openMessageModal('No Combatants', 'No combatants to advance turn for!');
+            openMessageModal('No Combatants', 'Please add combatants to start combat.');
             return;
         }
 
-        // Decrement condition durations for the current combatant
-        if (currentTurnIndex !== -1 && combatants[currentTurnIndex]) {
-            const currentCombatant = combatants[currentTurnIndex];
-            currentCombatant.conditions.forEach(condition => {
-                if (condition.duration !== null && condition.duration > 0) {
+        if (currentTurnIndex === -1 || currentTurnIndex === combatants.length - 1) {
+            currentTurnIndex = 0;
+            currentRound++;
+            openMessageModal('New Round', `Starting Round ${currentRound}!`);
+            updateConditions(); // Update conditions at the start of a new round
+        } else {
+            currentTurnIndex++;
+        }
+        updateTurnDisplay();
+        renderCombatants(); // Re-render to highlight current turn
+        saveEncounter();
+    }
+
+    function prevTurn() {
+        if (combatants.length === 0) {
+            openMessageModal('No Combatants', 'Please add combatants to start combat.');
+            return;
+        }
+
+        if (currentTurnIndex === 0) {
+            if (currentRound > 1) {
+                currentTurnIndex = combatants.length - 1;
+                currentRound--;
+                openMessageModal('Previous Round', `Back to Round ${currentRound}.`);
+            } else {
+                openMessageModal('First Round', 'Cannot go to a previous round.');
+            }
+        } else if (currentTurnIndex === -1) {
+            // If combat hasn't started, go to the last combatant of round 1
+            currentTurnIndex = combatants.length - 1;
+        } else {
+            currentTurnIndex--;
+        }
+        updateTurnDisplay();
+        renderCombatants();
+        saveEncounter();
+    }
+
+    function updateConditions() {
+        combatants.forEach(combatant => {
+            combatant.conditions = combatant.conditions.filter(condition => {
+                if (condition.duration !== null) {
                     condition.duration--;
+                    if (condition.duration <= 0) {
+                        openMessageModal('Condition Expired', `${combatant.name}'s ${condition.name} condition has expired!`);
+                        return false; // Remove condition
+                    }
                 }
+                return true; // Keep condition
             });
-            // Remove conditions that have expired
-            currentCombatant.conditions = currentCombatant.conditions.filter(cond => cond.duration === null || cond.duration > 0);
-        }
-
-        // Filter out "dead" combatants for turn progression
-        const activeCombatants = combatants.filter(c => !(c.currentHp <= 0 && (!c.isPC || (c.deathSaves && c.deathSaves.failures >= 3))));
-
-        if (activeCombatants.length === 0) {
-            openMessageModal('Combat Ended', 'All active combatants are down or combat ended!');
-            currentTurnIndex = -1; // No active turn
-            currentTurnSpan.textContent = 'None';
-            currentRound = 1; // Reset round if combat ends
-            saveEncounter();
-            renderCombatants(); // Re-render to clear turn highlight
-            return;
-        }
-
-        let nextIndexInActiveList = -1;
-        if (currentTurnIndex === -1) {
-            // Combat not started or just reset, start with the first active combatant
-            nextIndexInActiveList = 0;
-            currentRound = 1; // Ensure round is 1 when starting
-        } else {
-            // Find the current combatant's index in the *full* combatants list
-            const currentCombatantInFullList = combatants[currentTurnIndex];
-            const currentActiveIndex = activeCombatants.findIndex(c => c.id === currentCombatantInFullList.id);
-
-            if (currentActiveIndex !== -1 && currentActiveIndex < activeCombatants.length - 1) {
-                // Move to the next active combatant
-                nextIndexInActiveList = currentActiveIndex + 1;
-            } else {
-                // Wrap around to the start of the active list, new round
-                currentRound++;
-                nextIndexInActiveList = 0;
-            }
-        }
-
-        // Map the active list index back to the full combatants list index
-        currentTurnIndex = combatants.findIndex(c => c.id === activeCombatants[nextIndexInActiveList].id);
-
+        });
         renderCombatants();
         saveEncounter();
     }
 
-    /**
-     * Resets the current combat encounter (round and turn), but keeps combatants.
-     */
-    function resetCombat() {
-        openConfirmationModal(
-            'Reset Combat',
-            'Are you sure you want to reset the current round and turn? Combatants will remain.',
-            () => {
-                currentRound = 1;
-                currentTurnIndex = -1;
-                renderCombatants();
-                saveEncounter();
-                openMessageModal('Combat Reset', 'Combat round and turn have been reset.');
-            },
-            () => {
-                // User cancelled
-            }
-        );
-    }
+    // --- Dice Roller Logic ---
+    function rollDice(notation) {
+        notation = notation.toLowerCase();
+        const parts = notation.match(/^(\d*)d(\d+)([+-]\d+)?$/);
 
-    /**
-     * Kills a combatant by setting their HP to 0 and applying dead status.
-     * If already dead, it revives them to 1 HP and removes death saves.
-     * @param {string} combatantId - The ID of the combatant to kill/revive.
-     */
-    function killCombatant(combatantId) {
-        const combatant = combatants.find(c => c.id === combatantId);
-        if (!combatant) return;
-
-        if (combatant.currentHp <= 0 && (!combatant.isPC || (combatant.deathSaves && combatant.deathSaves.failures >= 3))) {
-            // Combatant is currently dead, so revive them
-            openConfirmationModal(
-                'Revive Combatant',
-                `Are you sure you want to revive ${combatant.name}? They will be set to 1 HP.`,
-                () => {
-                    combatant.currentHp = 1;
-                    combatant.tempHp = 0; // Clear temp HP on revive
-                    if (combatant.isPC) {
-                        combatant.deathSaves = { successes: 0, failures: 0 }; // Reset death saves
-                    }
-                    renderCombatants();
-                    saveEncounter();
-                    openMessageModal('Combatant Revived', `${combatant.name} has been revived to 1 HP.`);
-                },
-                () => {
-                    // User cancelled
-                }
-            );
-        } else {
-            // Combatant is alive (or dying), so kill them
-            openConfirmationModal(
-                'Kill Combatant',
-                `Are you sure you want to kill ${combatant.name}? This will set their HP to 0.`,
-                () => {
-                    combatant.currentHp = 0;
-                    combatant.tempHp = 0; // Clear temp HP on death
-                    if (combatant.isPC) {
-                        // For PCs, immediately mark as 3 failures if killed
-                        combatant.deathSaves = { successes: 0, failures: 3 };
-                    }
-                    renderCombatants();
-                    saveEncounter();
-                    openMessageModal('Combatant Killed', `${combatant.name} has been set to 0 HP.`);
-                },
-                () => {
-                    // User cancelled
-                }
-            );
-        }
-    }
-
-    // --- HP and Death Save Functions ---
-
-    /**
-     * Applies damage to a combatant.
-     * @param {string} combatantId - The ID of the combatant.
-     * @param {number} amount - The amount of damage to apply.
-     */
-    function applyDamage(combatantId, amount) {
-        const combatant = combatants.find(c => c.id === combatantId);
-        if (combatant && amount > 0) {
-            if (combatant.tempHp > 0) {
-                if (amount <= combatant.tempHp) {
-                    combatant.tempHp -= amount;
-                } else {
-                    combatant.currentHp -= (amount - combatant.tempHp);
-                    combatant.tempHp = 0;
-                }
-            } else {
-                combatant.currentHp -= amount;
-            }
-            // Reset death saves if HP goes above 0
-            if (combatant.isPC && combatant.currentHp > 0 && combatant.deathSaves) {
-                combatant.deathSaves.successes = 0;
-                combatant.deathSaves.failures = 0;
-            }
-            renderCombatants();
-            saveEncounter();
-        }
-    }
-
-    /**
-     * Applies healing to a combatant.
-     * @param {string} combatantId - The ID of the combatant.
-     * @param {number} amount - The amount of healing to apply.
-     */
-    function applyHealing(combatantId, amount) {
-        const combatant = combatants.find(c => c.id === combatantId);
-        if (combatant && amount > 0) {
-            combatant.currentHp = Math.min(combatant.maxHp, combatant.currentHp + amount);
-            // Reset death saves if HP goes above 0
-            if (combatant.isPC && combatant.currentHp > 0 && combatant.deathSaves) {
-                combatant.deathSaves.successes = 0;
-                combatant.deathSaves.failures = 0;
-            }
-            renderCombatants();
-            saveEncounter();
-        }
-    }
-
-    /**
-     * Applies temporary HP to a combatant.
-     * @param {string} combatantId - The ID of the combatant.
-     * @param {number} amount - The amount of temporary HP to apply.
-     */
-    function applyTempHp(combatantId, amount) {
-        const combatant = combatants.find(c => c.id === combatantId);
-        if (combatant && amount >= 0) { // Allow setting temp HP to 0
-            // Temp HP doesn't stack, take the higher value, unless new value is 0
-            combatant.tempHp = Math.max(combatant.tempHp, amount);
-            if (amount === 0) combatant.tempHp = 0; // Explicitly set to 0 if input is 0
-            renderCombatants();
-            saveEncounter();
-        }
-    }
-
-    /**
-     * Toggles a death save success or failure for a PC.
-     * @param {string} combatantId - The ID of the PC.
-     * @param {'success'|'failure'} type - The type of death save.
-     * @param {number} index - The index of the death save box (0, 1, or 2).
-     */
-    function toggleDeathSave(combatantId, type, index) {
-        const combatant = combatants.find(c => c.id === combatantId);
-        if (combatant && combatant.isPC && combatant.deathSaves) {
-            if (type === 'success') {
-                if (combatant.deathSaves.successes > index) { // Clicking filled to unfill
-                    combatant.deathSaves.successes = index;
-                } else { // Clicking empty to fill
-                    combatant.deathSaves.successes = index + 1;
-                }
-            } else if (type === 'failure') {
-                if (combatant.deathSaves.failures > index) { // Clicking filled to unfill
-                    combatant.deathSaves.failures = index;
-                } else { // Clicking empty to fill
-                    combatant.deathSaves.failures = index + 1;
-                }
-            }
-            // Logic for death/stabilization based on saves
-            if (combatant.deathSaves.successes >= 3) {
-                openMessageModal('Stable!', `${combatant.name} is stable! Death saves reset, HP set to 1.`);
-                combatant.currentHp = 1; // Stabilize at 1 HP
-                combatant.deathSaves = { successes: 0, failures: 0 }; // Reset saves
-            } else if (combatant.deathSaves.failures >= 3) {
-                openMessageModal('Dead!', `${combatant.name} is dead!`);
-                combatant.currentHp = -999; // Mark as definitively dead
-                combatant.deathSaves = { successes: 0, failures: 0 }; // Reset saves
-            }
-
-            renderCombatants();
-            saveEncounter();
-        }
-    }
-
-    // --- Condition Management Functions ---
-
-    /**
-     * Renders the list of conditions in the "Add Condition" modal,
-     * filtered by search input. Allows multiple selection.
-     * @param {string} filterText - Text to filter conditions by.
-     */
-    function renderConditionsForSelection(filterText = '') {
-        conditionSelectionGrid.innerHTML = '';
-        const filteredConditions = allConditions.filter(c =>
-            c.name.toLowerCase().includes(filterText.toLowerCase())
-        ).sort((a, b) => a.name.localeCompare(b.name)); // Sort alphabetically
-
-        if (filteredConditions.length === 0) {
-            conditionSelectionGrid.innerHTML = '<p style="text-align: center; color: var(--color-text-muted); padding: 20px;">No conditions found.</p>';
+        if (!parts) {
+            rollResultDiv.textContent = 'Invalid dice notation. Use format like "1d20" or "2d6+3".';
             return;
         }
 
-        filteredConditions.forEach(condition => {
-            const conditionItem = document.createElement('div');
-            conditionItem.className = 'condition-item';
-            conditionItem.dataset.conditionName = condition.name;
+        const numDice = parseInt(parts[1] || '1');
+        const dieType = parseInt(parts[2]);
+        const modifier = parseInt(parts[3] || '0');
 
-            // Check if this condition is already selected for the current combatant
-            const isAlreadyApplied = currentCombatantForCondition && currentCombatantForCondition.conditions.some(c => c.name === condition.name);
-            if (isAlreadyApplied) {
-                conditionItem.classList.add('applied'); // Indicate already applied
-                conditionItem.title = `${condition.name} (Already Applied)`;
-            }
-
-            // Check if this condition is currently selected in the modal for application
-            const isSelectedForAdd = selectedConditionsForAdd.some(c => c.name === condition.name);
-            if (isSelectedForAdd) {
-                conditionItem.classList.add('selected');
-            }
-
-            // Use Lucide icon if mapped, otherwise use first letter
-            const iconName = conditionIconMap[condition.name] || conditionIconMap['default'];
-            let iconHtml = '';
-            if (iconName) {
-                iconHtml = `<i data-lucide="${iconName}"></i>`;
-            } else {
-                iconHtml = `<span>${condition.name.charAt(0).toUpperCase()}</span>`;
-            }
-
-            conditionItem.innerHTML = `${iconHtml}<span>${condition.name}</span>`;
-
-            conditionItem.addEventListener('click', () => {
-                if (isAlreadyApplied) {
-                    openMessageModal('Condition Already Applied', `${condition.name} is already applied to ${currentCombatantForCondition.name}.`);
-                    return;
-                }
-
-                conditionItem.classList.toggle('selected');
-                if (conditionItem.classList.contains('selected')) {
-                    selectedConditionsForAdd.push(condition);
-                } else {
-                    selectedConditionsForAdd = selectedConditionsForAdd.filter(c => c.name !== condition.name);
-                }
-                applyConditionBtn.disabled = selectedConditionsForAdd.length === 0; // Enable/disable apply button
-            });
-            conditionSelectionGrid.appendChild(conditionItem);
-            // Create Lucide icons for newly added condition items
-            lucide.createIcons({
-                container: conditionItem
-            });
-        });
-    }
-
-    /**
-     * Opens the "Add Condition" modal for a specific combatant.
-     * @param {string} combatantId - The ID of the combatant to add a condition to.
-     */
-    function openAddConditionModal(combatantId) {
-        currentCombatantForCondition = combatants.find(c => c.id === combatantId);
-        if (!currentCombatantForCondition) return;
-
-        addConditionCombatantNameSpan.textContent = currentCombatantForCondition.name;
-        addConditionSearchInput.value = ''; // Clear search input
-        conditionDurationInput.value = ''; // Clear duration input
-        selectedConditionsForAdd = []; // Reset selected conditions
-        applyConditionBtn.disabled = true; // Disable apply button initially
-
-        renderConditionsForSelection(); // Render all conditions
-        openModal(modalAddCondition);
-    }
-
-    /**
-     * Applies the selected conditions from the modal to the current combatant.
-     */
-    function applySelectedCondition() {
-        if (!currentCombatantForCondition || selectedConditionsForAdd.length === 0) {
-            openMessageModal('No Condition Selected', 'Please select at least one condition to apply.');
+        if (numDice <= 0 || dieType <= 0) {
+            rollResultDiv.textContent = 'Number of dice and die type must be positive.';
             return;
         }
 
-        let duration = null;
-        const durationValue = conditionDurationInput.value.trim();
-        if (durationValue !== '') {
-            duration = parseInt(durationValue);
-            if (isNaN(duration) || duration < 0) {
-                openMessageModal('Invalid Duration', 'Invalid duration. Please enter a non-negative number or leave empty for permanent.');
-                duration = null; // Revert to permanent if invalid
+        let totalRoll = 0;
+        let rolls = [];
+        for (let i = 0; i < numDice; i++) {
+            const roll = Math.floor(Math.random() * dieType) + 1;
+            rolls.push(roll);
+            totalRoll += roll;
+        }
+
+        const finalResult = totalRoll + modifier;
+        rollResultDiv.textContent = `Roll: ${rolls.join(' + ')}${modifier !== 0 ? (modifier > 0 ? ' + ' : ' - ') + Math.abs(modifier) : ''} = ${finalResult}`;
+    }
+
+    // --- Fetch Data from D&D 5e API ---
+    async function fetchAllMonsters() {
+        try {
+            const response = await fetch(`${DND_API_BASE_URL}/monsters`);
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
             }
-        }
-
-        selectedConditionsForAdd.forEach(selectedCond => {
-            // Check if combatant already has this condition
-            if (!currentCombatantForCondition.conditions.some(c => c.name === selectedCond.name)) {
-                currentCombatantForCondition.conditions.push({
-                    name: selectedCond.name,
-                    duration: duration,
-                    description: selectedCond.description
-                });
-            }
-        });
-
-        renderCombatants();
-        saveEncounter();
-        closeModal(modalAddCondition);
-        // Removed the message modal after applying conditions, as per user request.
-    }
-
-    /**
-     * Removes a condition from a combatant.
-     * @param {string} combatantId - The ID of the combatant.
-     * @param {string} conditionName - The name of the condition to remove.
-     */
-    function removeCondition(combatantId, conditionName) {
-        const combatant = combatants.find(c => c.id === combatantId);
-        if (!combatant) return;
-
-        openConfirmationModal(
-            'Remove Condition',
-            `Are you sure you want to remove the "${conditionName}" condition from ${combatant.name}?`,
-            () => {
-                combatant.conditions = combatant.conditions.filter(c => c.name !== conditionName);
-                renderCombatants();
-                saveEncounter();
-                // Removed the message modal after removing conditions, as per user request.
-            },
-            () => {
-                // User cancelled
-            }
-        );
-    }
-
-    /**
-     * Displays the description of a condition in a modal.
-     * @param {string} conditionName - The name of the condition.
-     */
-    function showConditionDescription(conditionName) {
-        const condition = allConditions.find(c => c.name === conditionName);
-        if (condition) {
-            conditionDescriptionTitle.textContent = condition.name;
-            conditionDescriptionText.innerHTML = `<p>${condition.description.replace(/\n/g, '</p><p>')}</p>`; // Preserve newlines as paragraphs
-            openModal(modalConditionDescription);
-        } else {
-            openMessageModal('Error', 'Condition description not found.');
-        }
-    }
-
-
-    // --- Modal Control Functions ---
-
-    /**
-     * Opens a given modal element. Resets inputs for specific modals.
-     * @param {HTMLElement} modalElement - The modal DOM element to open.
-     */
-    function openModal(modalElement) {
-        modalElement.style.display = 'flex'; // Use flex to center content
-        // Reset inputs when opening PC or Monster modals
-        if (modalElement.id === 'modal-pc-add') {
-            pcNameModalInput.value = '';
-            pcMaxHpModalInput.value = '';
-            pcAcModalInput.value = '';
-            pcInitiativeBonusModalInput.value = '0';
-            pcNameModalInput.focus();
-        } else if (modalElement.id === 'modal-monster-add') {
-            monsterSearchInput.value = '';
-            monsterSearchResults.innerHTML = '';
-            monsterSearchResults.style.display = 'none';
-            selectedMonsterData = null; // Clear selected monster data
-            addMonsterModalBtn.disabled = true; // Disable until a monster is selected or custom data entered
-            monsterNameModalInput.value = ''; // Clear custom monster name
-            monsterInitiativeModalInput.value = ''; // Clear custom monster init
-            monsterHpModalInput.value = ''; // Clear custom monster HP
-            monsterAcModalInput.value = ''; // Clear custom monster AC
-            monsterSearchInput.focus();
-            if (allMonsters.length === 0) {
-                fetchAllMonsters(); // Fetch monsters if not already loaded
-            }
-        }
-    }
-
-    /**
-     * Closes a given modal element. Resets `editingCombatantId` if closing the edit modal.
-     * @param {HTMLElement} modalElement - The modal DOM element to close.
-     */
-    function closeModal(modalElement) {
-        modalElement.style.display = 'none';
-        if (modalElement.id === 'modal-edit-combatant') {
-            editingCombatantId = null; // Clear the ID when the edit modal closes
-        }
-    }
-
-    /**
-     * Opens the "Edit Combatant" modal, populating it with the combatant's current data.
-     * @param {string} combatantId - The ID of the combatant to edit.
-     */
-    function openEditCombatantModal(combatantId) {
-        console.log('Attempting to open edit modal for combatantId:', combatantId);
-        const combatant = combatants.find(c => c.id === combatantId);
-        if (!combatant) {
-            console.error('Combatant not found for ID:', combatantId);
-            openMessageModal('Error', 'Combatant not found for editing.');
-            return;
-        }
-        console.log('Found combatant:', combatant.name, combatant);
-
-        editingCombatantId = combatantId; // Store the ID of the combatant being edited
-
-        editNameModalInput.value = combatant.name;
-        editInitiativeModalInput.value = combatant.initiative !== null ? combatant.initiative : '';
-        editHpModalInput.value = combatant.currentHp;
-        editMaxHpModalInput.value = combatant.maxHp;
-        editAcModal.value = combatant.ac; // Corrected variable usage
-        editTempHpModalInput.value = combatant.tempHp;
-
-        openModal(modalEditCombatant);
-        editNameModalInput.focus();
-    }
-
-    /**
-     * Opens the full monster details modal for a given combatant.
-     * @param {string} combatantId - The ID of the combatant (must be a monster).
-     */
-    function showMonsterDetailsModal(combatantId) {
-        const combatant = combatants.find(c => c.id === combatantId);
-        if (!combatant || !combatant.isMonster || (!combatant.monsterDetails && !combatant.stats)) {
-            openMessageModal('No Details', 'No detailed monster data available for this combatant.');
-            return;
-        }
-
-        const details = combatant.monsterDetails || combatant; // Use monsterDetails or the combatant itself for custom monsters
-        monsterDetailsName.textContent = details.name;
-
-        let contentHtml = `
-            <h4>Basic Info</h4>
-            <p><strong>Size:</strong> ${details.size || 'N/A'}</p>
-            <p><strong>Type:</strong> ${details.type || 'N/A'}</p>
-            <p><strong>Alignment:</strong> ${details.alignment || 'N/A'}</p>
-            <p><strong>Armor Class:</strong> ${details.armor_class && details.armor_class.length > 0 ? details.armor_class[0].value : details.ac || 'N/A'}</p>
-            <p><strong>Hit Points:</strong> ${details.hit_points || details.maxHp || 'N/A'} (${details.hit_points_roll || 'N/A'})</p>
-            <p><strong>Speed:</strong> ${details.speed ? (typeof details.speed === 'object' ? Object.entries(details.speed).map(([key, value]) => `${key}: ${value}`).join(', ') : details.speed) : 'N/A'}</p>
-        `;
-
-        const stats = details.stats || {
-            strength: details.strength,
-            dexterity: details.dexterity,
-            constitution: details.constitution,
-            intelligence: details.intelligence,
-            wisdom: details.wisdom,
-            charisma: details.charisma
-        };
-
-        if (Object.values(stats).some(val => val !== undefined && val !== null)) {
-            contentHtml += `<h4>Stats</h4>`;
-            for (const statName in stats) {
-                const statValue = stats[statName];
-                if (statValue !== undefined && statValue !== null) {
-                    const modifier = Math.floor((statValue - 10) / 2);
-                    const modifierSign = modifier >= 0 ? '+' : '';
-                    contentHtml += `<p><strong>${statName.toUpperCase()}:</strong> ${statValue} (${modifierSign}${modifier})</p>`;
-                }
-            }
-        }
-
-
-        if (details.proficiencies && details.proficiencies.length > 0) {
-            contentHtml += `
-                <h4>Proficiencies</h4>
-                <ul>
-                    ${details.proficiencies.map(p => `<li>${p.proficiency ? p.proficiency.name.replace('Saving Throw: ', '') : p.name} +${p.value}</li>`).join('')}
-                </ul>
-            `;
-        }
-
-        if (details.damage_vulnerabilities && details.damage_vulnerabilities.length > 0) {
-            contentHtml += `<h4>Damage Vulnerabilities</h4><p>${details.damage_vulnerabilities.join(', ')}</p>`;
-        }
-        if (details.damage_resistances && details.damage_resistances.length > 0) {
-            contentHtml += `<h4>Damage Resistances</h4><p>${details.damage_resistances.join(', ')}</p>`;
-        }
-        if (details.damage_immunities && details.damage_immunities.length > 0) {
-            contentHtml += `<h4>Damage Immunities</h4><p>${details.damage_immunities.map(c => c.name || c).join(', ')}</p>`;
-        }
-        if (details.condition_immunities && details.condition_immunities.length > 0) {
-            contentHtml += `<h4>Condition Immunities</h4><p>${details.condition_immunities.map(c => c.name || c).join(', ')}</p>`;
-        }
-
-        if (details.senses) {
-            contentHtml += `<h4>Senses</h4><p>${Object.entries(details.senses).map(([key, value]) => `${key.replace(/_/g, ' ')}: ${value}`).join(', ')}</p>`;
-        }
-        if (details.languages) {
-            contentHtml += `<h4>Languages</h4><p>${details.languages}</p>`;
-        }
-        if (details.challenge_rating) {
-            contentHtml += `<h4>Challenge Rating</h4><p>${details.challenge_rating} (XP: ${details.xp || 'N/A'})</p>`;
-        }
-
-        // Custom description/features for imported JSON combatants
-        if (details.description) {
-            contentHtml += `<h4>Description</h4><p>${details.description}</p>`;
-        }
-        if (details.features && details.features.length > 0) {
-            contentHtml += `
-                <h4>Features</h4>
-                ${details.features.map(f => `<p><strong>${f.name}:</strong> ${f.description}</p>`).join('')}
-            `;
-        }
-
-
-        if (details.special_abilities && details.special_abilities.length > 0) {
-            contentHtml += `
-                <h4>Special Abilities</h4>
-                ${details.special_abilities.map(sa => `<p><strong>${sa.name}:</strong> ${sa.desc}</p>`).join('')}
-            `;
-        }
-        if (details.actions && details.actions.length > 0) {
-            contentHtml += `
-                <h4>Actions</h4>
-                ${details.actions.map(action => `<p><strong>${action.name}:</strong> ${action.desc}</p>`).join('')}
-            `;
-        }
-        if (details.legendary_actions && details.legendary_actions.length > 0) {
-            contentHtml += `
-                <h4>Legendary Actions</h4>
-                <p>${details.legendary_desc || ''}</p>
-                ${details.legendary_actions.map(la => `<p><strong>${la.name}:</strong> ${la.desc}</p>`).join('')}
-            `;
-        }
-        if (details.reactions && details.reactions.length > 0) {
-            contentHtml += `
-                <h4>Reactions</h4>
-                ${details.reactions.map(reaction => `<p><strong>${reaction.name}:</strong> ${reaction.desc}</p>`).join('')}
-            `;
-        }
-
-        monsterDetailsContent.innerHTML = contentHtml;
-        openModal(modalMonsterFullDetails);
-    }
-
-  // --- Patreon Integration Functions ---
-
-/**
- * Initiates the Patreon OAuth login flow by redirecting the user.
- */
-function loginWithPatreon() {
-    // Generate a random string for CSRF protection
-    const state = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
-    localStorage.setItem('patreon_oauth_state', state); // Store state to verify on callback
-
-    const authUrl = `${PATREON_OAUTH_AUTHORIZE_URL}?response_type=code&client_id=${PATREON_CLIENT_ID}&redirect_uri=${encodeURIComponent(PATREON_REDIRECT_URI)}&scope=${encodeURIComponent(PATREON_SCOPE)}&state=${state}`;
-    
-    console.log('Redirecting to Patreon OAuth URL:', authUrl);
-    console.log('PATREON_REDIRECT_URI:', PATREON_REDIRECT_URI);
-    
-    window.location.href = authUrl;
-}
-
-/**
- * Handles the callback from Patreon after user authorization.
- * Extracts the access token from the URL parameters.
- */
-function handlePatreonCallback() {
-    // Remove direct token exchange logic. The Netlify Function handles this.
-    // Instead, this function now sets up a listener for messages from the auth subdomain.
-
-    // This function will be called on page load.
-    // We expect the Netlify Function to redirect back to the main app URL,
-    // placing the tokens in the URL hash.
-    const hash = window.location.hash.substring(1); // Get hash without '#'
-    const params = new URLSearchParams(hash);
-
-    const accessToken = params.get('access_token');
-    const refreshToken = params.get('refresh_token');
-    const expiresIn = params.get('expires_in');
-    const state = params.get('state');
-
-    const storedState = localStorage.getItem('patreon_oauth_state');
-
-    // Clear hash from URL for cleaner UX and security
-    history.replaceState(null, '', window.location.pathname + window.location.search);
-
-    if (accessToken && refreshToken && state && state === storedState) {
-        localStorage.removeItem('patreon_oauth_state'); // State used, remove it
-
-        patreonAccessToken = accessToken;
-        patreonRefreshToken = refreshToken;
-        patreonTokenExpiresAt = Date.now() + (parseInt(expiresIn) * 1000); // Calculate expiration time
-
-        // Store tokens securely (e.g., in localStorage or sessionStorage for client-side use)
-        localStorage.setItem('patreon_access_token', patreonAccessToken);
-        localStorage.setItem('patreon_refresh_token', patreonRefreshToken);
-        localStorage.setItem('patreon_token_expires_at', patreonTokenExpiresAt);
-
-        console.log('Patreon tokens received from Netlify Function!');
-        fetchPatreonMembership(); // Fetch membership data after tokens are acquired
-        openMessageModal('Patreon Login', 'Successfully logged in with Patreon!');
-    } else if (params.get('error')) {
-        console.error('Patreon OAuth Error:', params.get('error_description') || 'Unknown error');
-        openMessageModal('Patreon Login Failed', 'Could not log in with Patreon. Please try again.');
-        localStorage.removeItem('patreon_oauth_state');
-    } else {
-        // No OAuth parameters in URL, check local storage for existing tokens
-        const storedAccessToken = localStorage.getItem('patreon_access_token');
-        const storedRefreshToken = localStorage.getItem('patreon_refresh_token');
-        const storedExpiresAt = localStorage.getItem('patreon_token_expires_at');
-
-        if (storedAccessToken && storedRefreshToken && storedExpiresAt) {
-            patreonAccessToken = storedAccessToken;
-            patreonRefreshToken = storedRefreshToken;
-            patreonTokenExpiresAt = parseInt(storedExpiresAt);
-
-            // Check if token is expired or close to expiring
-            if (Date.now() >= patreonTokenExpiresAt - (5 * 60 * 1000)) { // Refresh if less than 5 minutes remain
-                console.log('Patreon access token expired or expiring soon, attempting refresh...');
-                refreshPatreonToken();
-            } else {
-                console.log('Using stored Patreon access token.');
-                fetchPatreonMembership(); // Re-fetch membership with stored token
-            }
-        } else {
-            console.log('No Patreon authentication found.');
-            updateFeatureAccess(false); // Ensure features are locked if no auth
-        }
-    }
-}
-
-/**
- * Refreshes the Patreon access token using the refresh token
- */
-async function refreshPatreonToken() {
-    if (!patreonRefreshToken) {
-        console.error('No refresh token available to refresh Patreon token.');
-        updateFeatureAccess(false);
-        return;
-    }
-
-    try {
-        const response = await fetch(`${PATREON_AUTH_SERVICE_URL}/.netlify/functions/patreon-refresh`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ refresh_token: patreonRefreshToken })
-        });
-
-        const data = await response.json();
-
-        if (response.ok) {
-            patreonAccessToken = data.access_token;
-            patreonRefreshToken = data.refresh_token || patreonRefreshToken; // Use new refresh token if provided
-            patreonTokenExpiresAt = Date.now() + (parseInt(data.expires_in) * 1000);
-
-            localStorage.setItem('patreon_access_token', patreonAccessToken);
-            localStorage.setItem('patreon_refresh_token', patreonRefreshToken);
-            localStorage.setItem('patreon_token_expires_at', patreonTokenExpiresAt);
-
-            console.log('Patreon token refreshed successfully!');
-            fetchPatreonMembership();
-        } else {
-            console.error('Failed to refresh Patreon token:', data);
-            // Invalidate tokens if refresh fails (e.g., refresh token revoked)
-            clearPatreonTokens();
-            openMessageModal('Patreon Error', 'Failed to refresh Patreon login. Please log in again.');
-            updateFeatureAccess(false);
-        }
-    } catch (error) {
-        console.error('Error refreshing Patreon token:', error);
-        clearPatreonTokens();
-        openMessageModal('Patreon Error', 'Network error during token refresh. Please try again.');
-        updateFeatureAccess(false);
-    }
-}
-
-/**
- * Fetches the user's Patreon membership status using the access token.
- */
-async function fetchPatreonMembership() {
-    if (!patreonAccessToken) {
-        console.log('No Patreon access token available to fetch membership.');
-        updateFeatureAccess(false);
-        return;
-    }
-
-    // Check if token is still valid before making API call
-    if (Date.now() >= patreonTokenExpiresAt - (5 * 60 * 1000)) { // Refresh if less than 5 minutes remain
-        console.log('Access token expiring soon, attempting refresh before fetching membership...');
-        await refreshPatreonToken();
-        // If refreshPatreonToken fails, it will clear tokens and call updateFeatureAccess(false)
-        if (!patreonAccessToken) {
-            return; // Exit if refresh failed
-        }
-    }
-
-    try {
-        // Corrected APIv2 endpoint for fetching identity and memberships
-        const response = await fetch(`${PATREON_API_BASE_URL}/identity?include=memberships.campaign&fields%5Buser%5D=full_name,email&fields%5Bmember%5D=patron_status,current_user_can_pledge,pledge_cadence,last_charge_date,last_charge_status,lifetime_support_cents,currently_entitled_tiers&fields%5Bcampaign%5D=title`, {
-            headers: {
-                'Authorization': `Bearer ${patreonAccessToken}`,
-                'Content-Type': 'application/json'
-            }
-        });
-
-        if (response.ok) {
             const data = await response.json();
-            console.log('Patreon Identity Data:', data);
-
-            isPaidPatreonMember = false; // Reset status
-
-            // Check if user has any active memberships
-            if (data.included) {
-                const memberships = data.included.filter(item => item.type === 'member');
-                for (const membership of memberships) {
-                    if (membership.attributes.patron_status === 'active_patron' || membership.attributes.patron_status === 'will_pay') {
-                        // You might want to check for specific tier IDs here if you have multiple paid tiers
-                        isPaidPatreonMember = true;
-                        break;
-                    }
-                }
-            }
-
-            if (isPaidPatreonMember) {
-                patreonStatusDiv.textContent = 'Patreon Status: Active Supporter! (Full features unlocked)';
-                patreonLoginBtn.textContent = 'Logged in (Patreon)';
-                patreonLoginBtn.disabled = true;
-            } else {
-                patreonStatusDiv.textContent = 'Patreon Status: Not an active supporter. (Limited features)';
-                patreonLoginBtn.textContent = 'Login with Patreon'; // Allow re-login if status changed
-                patreonLoginBtn.disabled = false;
-            }
-            updateFeatureAccess(isPaidPatreonMember);
-
-        } else {
-            console.error('Failed to fetch Patreon membership:', response.status, response.statusText);
-            const errorData = await response.json();
-            console.error('Patreon API Error Details:', errorData);
-
-            if (response.status === 401) {
-                // Token expired or invalid, try to refresh
-                console.log('Patreon access token invalid, attempting refresh...');
-                await refreshPatreonToken();
-                // If refresh was successful, fetchPatreonMembership will be called again by refreshPatreonToken
-                // Otherwise, the tokens will be cleared and features locked below.
-                if (!patreonAccessToken) { // If refresh failed, clear tokens and update access
-                    clearPatreonTokens();
-                    openMessageModal('Patreon Error', 'Session expired. Please log in with Patreon again.');
-                    updateFeatureAccess(false);
-                }
-            } else {
-                openMessageModal('Patreon Error', 'Failed to fetch Patreon membership. Please try again later.');
-                updateFeatureAccess(false); // Lock features on other API errors
-            }
+            allMonsters = data.results; // Store all monster names and URLs
+            console.log('Monsters fetched:', allMonsters.length);
+        } catch (error) {
+            console.error('Error fetching monsters:', error);
+            openMessageModal('Error', 'Failed to fetch monster data. Please check your internet connection.');
         }
-    } catch (error) {
-        console.error('Error fetching Patreon membership:', error);
-        openMessageModal('Patreon Error', 'Network error during Patreon membership fetch. Please check your connection.');
-        updateFeatureAccess(false);
     }
-}
 
-/**
- * Clears all stored Patreon tokens and resets authentication status.
- */
-function clearPatreonTokens() {
-    patreonAccessToken = null;
-    patreonRefreshToken = null;
-    patreonTokenExpiresAt = null;
-    isPaidPatreonMember = false;
-    localStorage.removeItem('patreon_access_token');
-    localStorage.removeItem('patreon_refresh_token');
-    localStorage.removeItem('patreon_token_expires_at');
-    patreonStatusDiv.textContent = 'Patreon Status: Not logged in.';
-    patreonLoginBtn.textContent = 'Login with Patreon';
-    patreonLoginBtn.disabled = false;
-    console.log('Patreon tokens cleared.');
-}
-
-/**
- * Updates UI elements based on Patreon membership status.
- * @param {boolean} hasAccess - True if the user has paid Patreon access.
- */
-function updateFeatureAccess(hasAccess) {
-    if (hasAccess) {
-        partyManagementSection.classList.remove('locked-feature');
-        jsonControlsSection.classList.remove('locked-feature');
-        savePartyFileBtn.disabled = false;
-        loadPartyFileBtn.disabled = false;
-        copyJsonTemplateBtn.disabled = false;
-        importJsonCombatantBtn.disabled = false;
-        console.log('Patreon features unlocked!');
-    } else {
-        partyManagementSection.classList.add('locked-feature');
-        jsonControlsSection.classList.add('locked-feature');
-        savePartyFileBtn.disabled = true;
-        loadPartyFileBtn.disabled = true;
-        copyJsonTemplateBtn.disabled = true;
-        importJsonCombatantBtn.disabled = true;
-        console.log('Patreon features locked.');
+    async function fetchMonsterDetails(url) {
+        try {
+            const response = await fetch(`https://www.dnd5eapi.co${url}`);
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            const data = await response.json();
+            return data;
+        } catch (error) {
+            console.error('Error fetching monster details:', error);
+            openMessageModal('Error', 'Failed to fetch monster details.');
+            return null;
+        }
     }
-}
 
+    async function fetchAllConditions() {
+        try {
+            const response = await fetch(`${DND_API_BASE_URL}/conditions`);
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            const data = await response.json();
+            allConditions = data.results; // Store all condition names and URLs
+            populateConditionSelect(); // Populate the select dropdown
+            console.log('Conditions fetched:', allConditions.length);
+        } catch (error) {
+            console.error('Error fetching conditions:', error);
+            openMessageModal('Error', 'Failed to fetch condition data. Please check your internet connection.');
+        }
+    }
+
+    async function fetchConditionDetails(url) {
+        try {
+            const response = await fetch(`https://www.dnd5eapi.co${url}`);
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            const data = await response.json();
+            return data;
+        } catch (error) {
+            console.error('Error fetching condition details:', error);
+            openMessageModal('Error', 'Failed to fetch condition details.');
+            return null;
+        }
+    }
+
+    function populateConditionSelect() {
+        conditionSelect.innerHTML = '<option value="">Select a condition</option>';
+        allConditions.forEach(condition => {
+            const option = document.createElement('option');
+            option.value = condition.index;
+            option.textContent = condition.name;
+            conditionSelect.appendChild(option);
+        });
+    }
 
     // --- Event Listeners ---
 
-    // Open PC Modal Button
-    openPcModalBtn.addEventListener('click', () => openModal(modalPcAdd));
-
-    // Open Monster Modal Button
-    openMonsterModalBtn.addEventListener('click', () => openModal(modalMonsterAdd));
-
-    // Close Modal Buttons (the 'x' button)
-    closeButtons.forEach(button => {
-        button.addEventListener('click', (e) => {
-            const modalToClose = document.getElementById(e.target.closest('.close-button').dataset.modal);
-            if (modalToClose) {
-                closeModal(modalToClose);
+    // Close buttons for modals
+    document.querySelectorAll('.close-button').forEach(button => {
+        button.addEventListener('click', (event) => {
+            const modalId = event.currentTarget.dataset.modal;
+            const modalElement = document.getElementById(modalId);
+            if (modalElement) {
+                closeModal(modalElement);
             }
         });
     });
 
-    // Close Generic Message Modal
     messageModalCloseBtn.addEventListener('click', () => closeModal(modalMessage));
 
-    // Close Modal when clicking outside the modal content
-    window.addEventListener('click', (event) => {
-        if (event.target === modalPcAdd) {
-            closeModal(modalPcAdd);
-        } else if (event.target === modalMonsterAdd) {
-            closeModal(modalMonsterAdd);
-        } else if (event.target === modalEditCombatant) {
-            closeModal(modalEditCombatant);
-        } else if (event.target === modalConditionDescription) {
-            closeModal(modalConditionDescription);
-        } else if (event.target === modalAddCondition) {
-            closeModal(modalAddCondition);
-        } else if (event.target === modalClearConfirmation) {
-            closeModal(modalClearConfirmation);
-        } else if (event.target === modalMonsterFullDetails) {
-            closeModal(modalMonsterFullDetails);
-        } else if (event.target === modalMessage) {
-            closeModal(modalMessage);
-        } else if (event.target === modalConfirmation) {
-            // Confirmation modal is handled by its internal buttons
-        }
+    // Open PC Add Modal
+    openPcModalBtn.addEventListener('click', () => openModal(modalPcAdd));
+
+    // Open Monster Add Modal
+    openMonsterModalBtn.addEventListener('click', () => openModal(modalMonsterAdd));
+
+    // Handle PC Form Submission
+    const pcForm = document.getElementById('pcForm'); // Get the form element
+    pcForm.addEventListener('submit', (event) => {
+        event.preventDefault();
+        addCombatant(pcNameModalInput.value, pcInitiativeBonusModalInput.value, pcMaxHpModalInput.value, pcAcModalInput.value, true);
+        pcNameModalInput.value = '';
+        pcInitiativeBonusModalInput.value = '';
+        pcMaxHpModalInput.value = '';
+        pcAcModalInput.value = '';
+        closeModal(modalPcAdd);
     });
 
-
-    // Add PC Button (inside modal)
-    addPcModalBtn.addEventListener('click', () => {
-        const pcName = pcNameModalInput.value.trim();
-        const pcMaxHp = parseInt(pcMaxHpModalInput.value);
-        const pcAc = parseInt(pcAcModalInput.value);
-        const pcInitiativeBonus = parseInt(pcInitiativeBonusModalInput.value);
-
-        if (!pcName || isNaN(pcMaxHp) || pcMaxHp <= 0 || isNaN(pcAc) || isNaN(pcInitiativeBonus)) {
-            openMessageModal('Input Error', 'Please fill in all PC fields correctly (Name, Max HP, AC, Initiative Bonus).');
-            return;
-        }
-
-        addCombatant({
-            name: pcName,
-            maxHp: pcMaxHp,
-            ac: pcAc,
-            initiativeBonus: pcInitiativeBonus,
-            isPC: true
-        });
-
-        closeModal(modalPcAdd); // Close modal after adding
-        openMessageModal('PC Added', `${pcName} added to combat!`);
-    });
-
-    // Monster Search Input (inside modal) - Suggestions and Details Display
-    monsterSearchInput.addEventListener('input', async (e) => {
-        const query = e.target.value.toLowerCase();
-        monsterSearchResults.innerHTML = '';
-        selectedMonsterData = null; // Reset selected monster data
-        addMonsterModalBtn.disabled = true; // Disable add button
-
-        if (query.length < 2) {
-            monsterSearchResults.style.display = 'none';
-            // Enable add button if custom monster name is entered
-            if (monsterNameModalInput.value.trim() !== '' && !isNaN(parseInt(monsterHpModalInput.value)) && !isNaN(parseInt(monsterAcModalInput.value))) {
-                 addMonsterModalBtn.disabled = false;
-             }
-            return;
-        }
-
-        const filteredMonsters = allMonsters.filter(m =>
-            m.name.toLowerCase().includes(query)
-        ).slice(0, 10);
-
-        if (filteredMonsters.length > 0) {
-            monsterSearchResults.style.display = 'block';
-            filteredMonsters.forEach(monster => {
-                const div = document.createElement('div');
-                div.textContent = monster.name;
-                div.dataset.slug = monster.slug;
-                div.classList.add('monster-suggestion-item'); // Add class for styling
-                div.addEventListener('click', async () => {
-                    monsterSearchInput.value = monster.name;
-                    monsterSearchResults.style.display = 'none';
-                    selectedMonsterData = await fetchMonsterDetails(monster.slug);
-                    if (selectedMonsterData) {
-                        // Populate modal fields with fetched data
-                        monsterNameModalInput.value = selectedMonsterData.name;
-                        monsterHpModalInput.value = selectedMonsterData.hit_points || '';
-                        monsterAcModalInput.value = selectedMonsterData.armor_class && selectedMonsterData.armor_class.length > 0 ? selectedMonsterData.armor_class[0].value : '';
-                        monsterInitiativeModalInput.value = selectedMonsterData.dexterity ? Math.floor((selectedMonsterData.dexterity - 10) / 2) : '0';
-                        addMonsterModalBtn.disabled = false; // Enable add button
-                    } else {
-                        // If fetching fails, allow adding as custom if fields are filled
-                        addMonsterModalBtn.disabled = !(monsterNameModalInput.value.trim() !== '' && !isNaN(parseInt(monsterHpModalInput.value)) && !isNaN(parseInt(monsterAcModalInput.value)));
-                    }
-                });
-                monsterSearchResults.appendChild(div);
-            });
-        } else {
-            monsterSearchResults.style.display = 'none';
-            // If no suggestions, still allow adding as custom if fields are filled
-            addMonsterModalBtn.disabled = !(monsterNameModalInput.value.trim() !== '' && !isNaN(parseInt(monsterHpModalInput.value)) && !isNaN(parseInt(monsterAcModalInput.value)));
-        }
-    });
-
-    // Listen for changes in custom monster inputs to enable/disable add button
-    [monsterNameModalInput, monsterHpModalInput, monsterAcModalInput, monsterInitiativeModalInput].forEach(input => {
-        input.addEventListener('input', () => {
-            // Enable add button if either a monster is selected OR custom fields are filled
-            if (selectedMonsterData || (monsterNameModalInput.value.trim() !== '' && !isNaN(parseInt(monsterHpModalInput.value)) && !isNaN(parseInt(monsterAcModalInput.value)))) {
-                addMonsterModalBtn.disabled = false;
-            } else {
-                addMonsterModalBtn.disabled = true;
-            }
-        });
-    });
-
-
-    // Add Monster Button (inside modal)
-    addMonsterModalBtn.addEventListener('click', async () => {
-        const customMonsterName = monsterNameModalInput.value.trim();
-        const customMonsterHp = parseInt(monsterHpModalInput.value);
-        const customMonsterAc = parseInt(monsterAcModalInput.value);
-        const customMonsterInitiativeBonus = parseInt(monsterInitiativeModalInput.value);
-
-        let monsterToAdd = {};
-
-        if (selectedMonsterData) {
-            // Use API data if a monster was selected from suggestions
-            monsterToAdd = {
-                name: selectedMonsterData.name,
-                maxHp: selectedMonsterData.hit_points || 1, // Default to 1 if no HP from API
-                ac: selectedMonsterData.armor_class && selectedMonsterData.armor_class.length > 0 ? selectedMonsterData.armor_class[0].value : 10, // Default AC
-                initiativeBonus: selectedMonsterData.dexterity ? Math.floor((selectedMonsterData.dexterity - 10) / 2) : 0,
-                isMonster: true,
-                monsterDetails: selectedMonsterData // Store full details
-            };
-        } else if (customMonsterName && !isNaN(customMonsterHp) && customMonsterHp > 0 && !isNaN(customMonsterAc) && !isNaN(customMonsterInitiativeBonus)) {
-            // Use custom input data if no monster was selected but custom fields are filled
-            monsterToAdd = {
-                name: customMonsterName,
-                maxHp: customMonsterHp,
-                ac: customMonsterAc,
-                initiativeBonus: customMonsterInitiativeBonus,
-                isMonster: true,
-                monsterDetails: null, // No API details for custom
-                stats: { // Populate basic stats for custom monster to make them rollable
-                    strength: 10, // Default to 10, can be expanded for more custom fields
-                    dexterity: (customMonsterInitiativeBonus * 2) + 10, // Estimate DEX from bonus
-                    constitution: 10,
-                    intelligence: 10,
-                    wisdom: 10,
-                    charisma: 10
-                }
-            };
-        } else {
-            openMessageModal('Input Error', 'Please select a monster from suggestions or fill in all custom monster fields correctly.');
-            return;
-        }
-
-        addCombatant(monsterToAdd);
+    // Handle Monster Form Submission
+    const monsterForm = document.getElementById('monsterForm'); // Get the form element
+    monsterForm.addEventListener('submit', (event) => {
+        event.preventDefault();
+        addCombatant(monsterNameModalInput.value, monsterInitiativeModalInput.value, monsterHpModalInput.value, monsterAcModalInput.value, false);
+        monsterNameModalInput.value = '';
+        monsterInitiativeModalInput.value = '';
+        monsterHpModalInput.value = '';
+        monsterAcModalInput.value = '';
         closeModal(modalMonsterAdd);
-        openMessageModal('Monster Added', `${monsterToAdd.name} added to combat!`);
     });
 
-    // Save Current Party to File Button
-    savePartyFileBtn.addEventListener('click', () => {
-        if (!isPaidPatreonMember) {
-            openMessageModal('Patreon Feature', 'This feature is available for paid Patreon members only. Please log in with Patreon.');
-            return;
-        }
+    // Start Combat
+    startCombatBtn.addEventListener('click', () => {
         if (combatants.length === 0) {
-            openMessageModal('No Combatants', 'There are no combatants to save in the current party.');
+            openMessageModal('Cannot Start', 'Add combatants to start combat!');
             return;
         }
-        savePartyToFile(combatants);
+        currentRound = 1;
+        currentTurnIndex = -1; // Reset to -1 so nextTurn starts at 0 and round 1
+        nextTurn(); // Start first turn of first round
+        openMessageModal('Combat Started', 'Initiative order set! Let the battle begin!');
     });
 
-    // Load Party from File Button (triggers hidden file input)
-    loadPartyFileBtn.addEventListener('click', () => {
-        if (!isPaidPatreonMember) {
-            openMessageModal('Patreon Feature', 'This feature is available for paid Patreon members only. Please log in with Patreon.');
-            return;
-        }
-        loadPartyFile.click(); // Programmatically click the hidden file input
-    });
-
-    // Hidden file input change listener for loading party
-    loadPartyFile.addEventListener('change', (event) => {
-        const file = event.target.files[0];
-        if (file) {
-            loadPartyFromFile(file);
-        }
-        event.target.value = ''; // Clear the input so same file can be selected again
-    });
-
-    // Copy JSON Template Button
-    copyJsonTemplateBtn.addEventListener('click', () => {
-        if (!isPaidPatreonMember) {
-            openMessageModal('Patreon Feature', 'This feature is available for paid Patreon members only. Please log in with Patreon.');
-            return;
-        }
-        copyJsonTemplate();
-    });
-
-    // Import JSON Combatant Button (triggers hidden file input)
-    importJsonCombatantBtn.addEventListener('click', () => {
-        if (!isPaidPatreonMember) {
-            openMessageModal('Patreon Feature', 'This feature is available for paid Patreon members only. Please log in with Patreon.');
-            return;
-        }
-        loadJsonCombatantFile.click();
-    });
-
-    // Hidden file input change listener for importing single combatant
-    loadJsonCombatantFile.addEventListener('change', (event) => {
-        const file = event.target.files[0];
-        if (file) {
-            importJsonCombatant(file);
-        }
-        event.target.value = ''; // Clear the input
-    });
-
-
-    // Event Delegation for combatant-specific buttons (Roll Init, Damage, Heal, Conditions, Remove, Edit etc.)
-    combatantList.addEventListener('click', (e) => {
-        const target = e.target;
-        // Use closest to find the button or icon's parent with the desired class
-        const combatantItem = target.closest('.combatant-row');
-        if (!combatantItem) return;
-        const combatantId = combatantItem.dataset.id;
-        const combatant = combatants.find(c => c.id === combatantId);
-        if (!combatant) return;
-
-        // Roll Init Button
-        if (target.closest('.roll-init-btn')) {
-            const initBonus = parseInt(target.closest('.roll-init-btn').dataset.initBonus);
-            const rollResult = rollD20();
-            combatant.initiative = rollResult + initBonus;
-            const initiativeInput = combatantItem.querySelector('.initiative-input');
-            if (initiativeInput) {
-                initiativeInput.value = combatant.initiative;
-            }
-            saveEncounter();
-            rollDiceResult(`Initiative Roll for ${combatant.name}: ${rollResult} + ${initBonus} = ${combatant.initiative}`);
-        }
-        // Damage Button
-        else if (target.closest('.hp-action-button.damage')) {
-            const amountInput = combatantItem.querySelector('.hp-input');
-            const amount = parseInt(amountInput.value);
-            if (!isNaN(amount) && amount > 0) {
-                applyDamage(combatantId, amount);
-                amountInput.value = '';
-            } else {
-                openMessageModal('Input Error', 'Please enter a valid positive number for damage.');
-            }
-        }
-        // Heal Button
-        else if (target.closest('.hp-action-button.heal')) {
-            const amountInput = combatantItem.querySelector('.hp-input');
-            const amount = parseInt(amountInput.value);
-            if (!isNaN(amount) && amount > 0) {
-                applyHealing(combatantId, amount);
-                amountInput.value = '';
-            } else {
-                openMessageModal('Input Error', 'Please enter a valid positive number for healing.');
-            }
-        }
-        // Temp HP Button
-        else if (target.closest('.hp-action-button.temp')) {
-            const amountInput = combatantItem.querySelector('.hp-input');
-            const amount = parseInt(amountInput.value);
-            if (!isNaN(amount) && amount >= 0) { // Can be 0 to remove
-                applyTempHp(combatantId, amount);
-                amountInput.value = '';
-            } else {
-                openMessageModal('Input Error', 'Please enter a valid non-negative number for temporary HP.');
-            }
-        }
-        // Add Condition Button (opens new modal)
-        else if (target.closest('.add-condition-btn')) {
-            openAddConditionModal(combatantId);
-        }
-        // Kill Combatant Button
-        else if (target.closest('.combatant-action-button.kill')) {
-            killCombatant(combatantId);
-        }
-        // Edit Combatant Button
-        else if (target.closest('.edit')) { // Using .edit class as a selector
-            openEditCombatantModal(combatantId);
-        }
-        // Remove Condition 'x'
-        else if (target.closest('.condition-remove-btn')) {
-            const conditionName = target.closest('.condition-remove-btn').dataset.conditionName;
-            removeCondition(combatantId, conditionName);
-        }
-        // Show Condition Description (click on the condition icon itself, but not the 'x')
-        else if (target.closest('.condition-icon') && !target.closest('.condition-remove-btn')) {
-            const conditionName = target.closest('.condition-icon').dataset.conditionName;
-            showConditionDescription(conditionName);
-        }
-        // Remove Combatant Button
-        else if (target.closest('.remove')) { // Using .remove class as a selector
-            openConfirmationModal(
-                'Remove Combatant',
-                `Are you sure you want to remove ${combatant.name}?`,
-                () => {
-                    combatants = combatants.filter(c => c.id !== combatantId);
-                    // Adjust currentTurnIndex if the removed combatant was before or at the current turn
-                    if (currentTurnIndex !== -1) {
-                        const removedIndex = Array.from(combatantList.children).findIndex(li => li.dataset.id === combatantId);
-                        if (removedIndex !== -1) {
-                            if (removedIndex === currentTurnIndex) {
-                                currentTurnIndex = -1; // Reset if current turn is removed
-                            } else if (removedIndex < currentTurnIndex) {
-                                currentTurnIndex--;
-                            }
-                        }
-                    }
-                    renderCombatants();
-                    saveEncounter();
-                    openMessageModal('Combatant Removed', `${combatant.name} has been removed.`);
-                },
-                () => {
-                    // User cancelled
-                }
-            );
-        }
-        // Death Save Boxes
-        else if (target.classList.contains('death-save-box')) {
-            const type = target.dataset.type;
-            const index = parseInt(target.dataset.index);
-            toggleDeathSave(combatantId, type, index);
-        }
-    });
-
-
-    // Global Control Buttons
-    sortInitiativeBtn.addEventListener('click', sortCombatants);
-    rollMonsterInitiativeBtn.addEventListener('click', rollAllMonsterInitiative); // New listener
-    startInitiativeBtn.addEventListener('click', startInitiative);
+    // Next Turn
     nextTurnBtn.addEventListener('click', nextTurn);
-    resetCombatBtn.addEventListener('click', resetCombat);
-    clearAllBtn.addEventListener('click', () => openModal(modalClearConfirmation));
 
-    // Dice Roller Button
-    rollDiceBtn.addEventListener('click', () => {
-        const notation = diceNotationInput.value.trim();
-        if (notation) {
-            rollDice(notation);
-        } else {
-            rollDiceResult('Please enter dice notation (e.g., 1d20+5).');
-        }
-    });
+    // Previous Turn
+    prevTurnBtn.addEventListener('click', prevTurn);
 
-    // Common Dice Roll Buttons
-    commonRollButtons.forEach(button => {
-        button.addEventListener('click', (e) => {
-            const diceNotation = e.target.dataset.roll; // Changed from data-dice to data-roll for consistency with HTML
-            if (diceNotation) {
-                diceNotationInput.value = diceNotation; // Populate input
-                rollDice(diceNotation);
-            }
-        });
-    });
-
-    // Save Edit Combatant Button
-    saveEditCombatantBtn.addEventListener('click', () => {
-        if (!editingCombatantId) return; // Should not happen if modal opened correctly
-
-        const combatant = combatants.find(c => c.id === editingCombatantId);
-        if (!combatant) return;
-
-        const newName = editNameModalInput.value.trim();
-        const newInitiative = parseInt(editInitiativeModalInput.value);
-        const newCurrentHp = parseInt(editHpModalInput.value);
-        const newMaxHp = parseInt(editMaxHpModalInput.value);
-        const newAc = parseInt(editAcModal.value); // Corrected variable usage
-        const newTempHp = parseInt(editTempHpModalInput.value);
-
-
-        if (!newName || isNaN(newCurrentHp) || isNaN(newMaxHp) || newMaxHp <= 0 || isNaN(newAc) || isNaN(newTempHp)) {
-            openMessageModal('Input Error', 'Please fill in all fields correctly (Name, Current HP, Max HP, AC, Temp HP).');
-            return;
-        }
-
-        // Update combatant properties
-        combatant.name = newName;
-        combatant.initiative = newInitiative;
-        combatant.currentHp = newCurrentHp;
-        combatant.maxHp = newMaxHp;
-        combatant.ac = newAc;
-        combatant.tempHp = newTempHp;
-
-        // Reset death saves if HP goes above 0
-        if (combatant.isPC && combatant.currentHp > 0 && combatant.deathSaves) {
-            combatant.deathSaves.successes = 0;
-            combatant.deathSaves.failures = 0;
-        }
-
-        renderCombatants();
-        saveEncounter();
-        closeModal(modalEditCombatant);
-        openMessageModal('Changes Saved', `${combatant.name}'s details have been updated.`);
-    });
-
-    // Add Condition Modal Event Listeners
-    addConditionSearchInput.addEventListener('input', (e) => {
-        renderConditionsForSelection(e.target.value.trim());
-    });
-
-    applyConditionBtn.addEventListener('click', applySelectedCondition);
-
-    // Clear Confirmation Modal Buttons
-    clearAllCombatantsBtn.addEventListener('click', () => {
+    // Clear All Combatants
+    clearAllBtn.addEventListener('click', () => {
         openConfirmationModal(
             'Clear All Combatants',
-            'This will remove ALL combatants and reset the encounter. Are you sure?',
+            'This will remove ALL combatants from the encounter. Are you sure?',
             () => {
                 combatants = [];
-                currentRound = 1;
                 currentTurnIndex = -1;
+                currentRound = 1;
                 renderCombatants();
+                updateTurnDisplay();
                 saveEncounter();
-                closeModal(modalClearConfirmation);
-                openMessageModal('Cleared', 'All combatants cleared!');
+                openMessageModal('All Cleared', 'All combatants cleared!');
             },
             () => {
                 // User cancelled
@@ -2268,6 +572,7 @@ function updateFeatureAccess(hasAccess) {
         );
     });
 
+    // Clear Monsters Only
     clearMonstersBtn.addEventListener('click', () => {
         openConfirmationModal(
             'Clear Monsters',
@@ -2280,7 +585,6 @@ function updateFeatureAccess(hasAccess) {
                 }
                 renderCombatants();
                 saveEncounter();
-                closeModal(modalClearConfirmation);
                 openMessageModal('Monsters Cleared', 'Monsters cleared from combat!');
             },
             () => {
@@ -2289,17 +593,340 @@ function updateFeatureAccess(hasAccess) {
         );
     });
 
-    cancelClearBtn.addEventListener('click', () => {
-        closeModal(modalClearConfirmation);
+
+    // Delegate event for Edit/Remove Combatant buttons
+    combatantsList.addEventListener('click', async (event) => {
+        // Edit Combatant
+        if (event.target.closest('.edit-combatant-btn')) {
+            const combatantId = event.target.closest('.edit-combatant-btn').dataset.id;
+            const combatantToEdit = combatants.find(c => c.id === combatantId);
+
+            if (combatantToEdit) {
+                editCombatantIdInput.value = combatantToEdit.id;
+                editNameModalInput.value = combatantToEdit.name;
+                editInitiativeModalInput.value = combatantToEdit.initiative;
+                editHpModalInput.value = combatantToEdit.hp !== null ? combatantToEdit.hp : '';
+                editMaxHpModalInput.value = combatantToEdit.ac !== null ? combatantToEdit.ac : ''; // Assuming this is AC
+                editAcModal.value = combatantToEdit.ac !== null ? combatantToEdit.ac : ''; // Assuming this is AC
+
+                // Render conditions for editing
+                const editCombatantConditionsList = document.getElementById('editCombatantConditionsList'); // Get the element
+                editCombatantConditionsList.innerHTML = '';
+                combatantToEdit.conditions.forEach(c => {
+                    const conditionTag = document.createElement('span');
+                    conditionTag.classList.add('condition-tag');
+                    conditionTag.innerHTML = `
+                        ${c.name} ${c.duration !== null ? `(${c.duration})` : ''}
+                        <i data-lucide="x" class="remove-condition-btn" data-combatant-id="${combatantToEdit.id}" data-condition-id="${c.id}"></i>
+                    `;
+                    editCombatantConditionsList.appendChild(conditionTag);
+                });
+                lucide.createIcons(); // Re-render Lucide icons
+
+                selectedCombatantIdForCondition = combatantId; // Set for adding new conditions
+                openModal(modalEditCombatant);
+            }
+        }
+        // Remove Combatant
+        else if (event.target.closest('.remove-combatant-btn')) {
+            const combatantId = event.target.closest('.remove-combatant-btn').dataset.id;
+            const combatantName = combatants.find(c => c.id === combatantId)?.name || 'Combatant';
+
+            openConfirmationModal(
+                'Remove Combatant',
+                `Are you sure you want to remove ${combatantName} from combat?`,
+                () => {
+                    combatants = combatants.filter(c => c.id !== combatantId);
+                    // Adjust currentTurnIndex if the removed combatant was before the current turn
+                    if (currentTurnIndex !== -1) {
+                        const removedIndex = combatants.findIndex(c => c.id === combatantId);
+                        if (removedIndex !== -1 && removedIndex < currentTurnIndex) {
+                            currentTurnIndex--;
+                        }
+                        if (currentTurnIndex >= combatants.length) { // If last combatant was removed
+                            currentTurnIndex = combatants.length > 0 ? 0 : -1;
+                        }
+                    }
+                    renderCombatants();
+                    updateTurnDisplay();
+                    saveEncounter();
+                    openMessageModal('Combatant Removed', `${combatantName} removed.`);
+                },
+                () => {
+                    // User cancelled
+                }
+            );
+        }
+        // Remove Condition from Combatant (within the edit modal)
+        else if (event.target.closest('.remove-condition-btn')) {
+            const combatantId = event.target.closest('.remove-condition-btn').dataset.combatantId;
+            const conditionId = event.target.closest('.remove-condition-btn').dataset.conditionId;
+
+            const combatant = combatants.find(c => c.id === combatantId);
+            if (combatant) {
+                combatant.conditions = combatant.conditions.filter(c => c.id !== conditionId);
+                renderCombatants(); // Re-render main list to update conditions
+                // Also update conditions in the edit modal if it's open
+                const combatantToEdit = combatants.find(c => c.id === selectedCombatantIdForCondition);
+                if (combatantToEdit) {
+                    const editCombatantConditionsList = document.getElementById('editCombatantConditionsList'); // Get the element
+                    editCombatantConditionsList.innerHTML = '';
+                    combatantToEdit.conditions.forEach(c => {
+                        const conditionTag = document.createElement('span');
+                        conditionTag.classList.add('condition-tag');
+                        conditionTag.innerHTML = `
+                            ${c.name} ${c.duration !== null ? `(${c.duration})` : ''}
+                            <i data-lucide="x" class="remove-condition-btn" data-combatant-id="${combatantToEdit.id}" data-condition-id="${c.id}"></i>
+                        `;
+                        editCombatantConditionsList.appendChild(conditionTag);
+                    });
+                    lucide.createIcons();
+                }
+                saveEncounter();
+                openMessageModal('Condition Removed', 'Condition removed successfully.');
+            }
+        }
+        // Show Condition Description
+        else if (event.target.closest('.condition-tag')) {
+            const conditionName = event.target.closest('.condition-tag').dataset.conditionName;
+            const condition = allConditions.find(c => c.name === conditionName);
+            if (condition) {
+                const details = await fetchConditionDetails(condition.url);
+                if (details) {
+                    document.getElementById('conditionDescriptionTitle').textContent = details.name;
+                    document.getElementById('conditionDescriptionText').innerHTML = details.desc.map(p => `<p>${p}</p>`).join('');
+                    openModal(modalConditionDescription);
+                }
+            }
+        }
     });
 
-    // Patreon Login Button
-    patreonLoginBtn.addEventListener('click', loginWithPatreon);
+    // Handle Edit Combatant Form Submission
+    const editCombatantForm = document.getElementById('editCombatantForm'); // Get the form element
+    editCombatantForm.addEventListener('submit', (event) => {
+        event.preventDefault();
+        const id = editCombatantIdInput.value;
+        const combatantIndex = combatants.findIndex(c => c.id === id);
 
-    // Initial setup when DOM is ready
+        if (combatantIndex !== -1) {
+            combatants[combatantIndex].name = editNameModalInput.value;
+            combatants[combatantIndex].initiative = parseInt(editInitiativeModalInput.value);
+            combatants[combatantIndex].hp = editHpModalInput.value !== '' ? parseInt(editHpModalInput.value) : null;
+            combatants[combatantIndex].ac = editMaxHpModalInput.value !== '' ? parseInt(editMaxHpModalInput.value) : null; // Assuming this is AC
+            sortCombatants();
+            renderCombatants();
+            updateTurnDisplay(); // In case initiative changed and turn order shifted
+            saveEncounter();
+            closeModal(modalEditCombatant);
+            openMessageModal('Combatant Updated', `${combatants[combatantIndex].name} updated!`);
+        }
+    });
+
+    // Open Add Condition Modal from Edit Combatant Modal
+    const openAddConditionModalBtn = document.getElementById('openAddConditionModalBtn'); // Get the button
+    openAddConditionModalBtn.addEventListener('click', () => {
+        addConditionCombatantIdInput.value = selectedCombatantIdForCondition;
+        openModal(modalAddCondition);
+    });
+
+    // Add Condition to Combatant
+    addConditionBtn.addEventListener('click', () => {
+        const combatantId = addConditionCombatantIdInput.value;
+        const selectedConditionIndex = conditionSelect.value;
+        const duration = conditionDurationInput.value !== '' ? parseInt(conditionDurationInput.value) : null;
+
+        if (!selectedConditionIndex) {
+            openMessageModal('Error', 'Please select a condition.');
+            return;
+        }
+
+        const combatant = combatants.find(c => c.id === combatantId);
+        const conditionDetails = allConditions.find(c => c.index === selectedConditionIndex);
+
+        if (combatant && conditionDetails) {
+            // Check if condition already exists to prevent duplicates
+            if (combatant.conditions.some(c => c.name === conditionDetails.name)) {
+                openMessageModal('Condition Exists', `${combatant.name} already has the ${conditionDetails.name} condition.`);
+                return;
+            }
+
+            combatant.conditions.push({
+                id: generateUniqueId(), // Unique ID for this specific condition instance
+                name: conditionDetails.name,
+                duration: duration
+            });
+            renderCombatants(); // Re-render main list
+            // Re-render conditions in the edit modal if it's still open
+            const combatantToEdit = combatants.find(c => c.id === selectedCombatantIdForCondition);
+            if (combatantToEdit) {
+                const editCombatantConditionsList = document.getElementById('editCombatantConditionsList'); // Get the element
+                editCombatantConditionsList.innerHTML = '';
+                combatantToEdit.conditions.forEach(c => {
+                    const conditionTag = document.createElement('span');
+                    conditionTag.classList.add('condition-tag');
+                    conditionTag.innerHTML = `
+                        ${c.name} ${c.duration !== null ? `(${c.duration})` : ''}
+                        <i data-lucide="x" class="remove-condition-btn" data-combatant-id="${combatantToEdit.id}" data-condition-id="${c.id}"></i>
+                    `;
+                    editCombatantConditionsList.appendChild(conditionTag);
+                });
+                lucide.createIcons();
+            }
+            saveEncounter();
+            closeModal(modalAddCondition);
+            openMessageModal('Condition Added', `${conditionDetails.name} added to ${combatant.name}.`);
+            conditionDurationInput.value = ''; // Clear duration input
+            conditionSelect.value = ''; // Reset select
+        }
+    });
+
+
+    // Dice Roller Button
+    rollDiceBtn.addEventListener('click', () => {
+        rollDice(diceNotationInput.value);
+    });
+
+    // Common Roll Buttons
+    commonRollButtons.forEach(button => {
+        button.addEventListener('click', (event) => {
+            rollDice(event.target.dataset.roll);
+        });
+    });
+
+    // Monster Search
+    const monsterSearchBtn = document.getElementById('monsterSearchBtn'); // Get the button
+    monsterSearchBtn.addEventListener('click', async () => {
+        const searchTerm = monsterSearchInput.value.trim().toLowerCase();
+        monsterSearchResults.innerHTML = ''; // Clear previous results
+
+        if (!searchTerm) {
+            monsterSearchResults.innerHTML = '<p class="message-text">Please enter a monster name to search.</p>';
+            return;
+        }
+
+        const filteredMonsters = allMonsters.filter(monster =>
+            monster.name.toLowerCase().includes(searchTerm)
+        );
+
+        if (filteredMonsters.length === 0) {
+            monsterSearchResults.innerHTML = '<p class="message-text">No monsters found matching your search.</p>';
+            return;
+        }
+
+        filteredMonsters.forEach(monster => {
+            const resultItem = document.createElement('div');
+            resultItem.classList.add('search-result-item', 'card');
+            resultItem.innerHTML = `
+                <span>${monster.name}</span>
+                <button class="button button-secondary view-monster-details-btn" data-url="${monster.url}">View Details</button>
+            `;
+            monsterSearchResults.appendChild(resultItem);
+        });
+    });
+
+    // Delegate event for View Monster Details button
+    monsterSearchResults.addEventListener('click', async (event) => {
+        if (event.target.closest('.view-monster-details-btn')) {
+            const monsterUrl = event.target.closest('.view-monster-details-btn').dataset.url;
+            const monsterDetails = await fetchMonsterDetails(monsterUrl);
+
+            if (monsterDetails) {
+                monsterDetailsName.textContent = monsterDetails.name;
+                monsterDetailsContent.innerHTML = `
+                    <p><strong>Size:</strong> ${monsterDetails.size}</p>
+                    <p><strong>Type:</strong> ${monsterDetails.type}</p>
+                    <p><strong>Alignment:</strong> ${monsterDetails.alignment}</p>
+                    <p><strong>Armor Class:</strong> ${monsterDetails.armor_class[0]?.value || 'N/A'} (${monsterDetails.armor_class[0]?.type || ''})</p>
+                    <p><strong>Hit Points:</strong> ${monsterDetails.hit_points} (${monsterDetails.hit_points_roll})</p>
+                    <p><strong>Speed:</strong> ${Object.entries(monsterDetails.speed).map(([key, value]) => `${key}: ${value}`).join(', ')}</p>
+                    <p><strong>Strength:</strong> ${monsterDetails.strength}</p>
+                    <p><strong>Dexterity:</strong> ${monsterDetails.dexterity}</p>
+                    <p><strong>Constitution:</strong> ${monsterDetails.constitution}</p>
+                    <p><strong>Intelligence:</strong> ${monsterDetails.intelligence}</p>
+                    <p><strong>Wisdom:</strong> ${monsterDetails.wisdom}</p>
+                    <p><strong>Charisma:</strong> ${monsterDetails.charisma}</p>
+                    ${monsterDetails.proficiencies.length > 0 ? `
+                        <p><strong>Proficiencies:</strong></p>
+                        <ul>
+                            ${monsterDetails.proficiencies.map(p => `<li>${p.proficiency.name.replace('Saving Throw: ', '')} +${p.value}</li>`).join('')}
+                        </ul>
+                    ` : ''}
+                    ${monsterDetails.senses ? `<p><strong>Senses:</strong> ${monsterDetails.senses}</p>` : ''}
+                    ${monsterDetails.languages ? `<p><strong>Languages:</strong> ${monsterDetails.languages}</p>` : ''}
+                    ${monsterDetails.challenge_rating ? `<p><strong>Challenge Rating:</strong> ${monsterDetails.challenge_rating} (${monsterDetails.xp} XP)</p>` : ''}
+                    ${monsterDetails.special_abilities.length > 0 ? `
+                        <h3>Special Abilities:</h3>
+                        ${monsterDetails.special_abilities.map(ability => `
+                            <h4>${ability.name}</h4>
+                            <p>${ability.desc}</p>
+                        `).join('')}
+                    ` : ''}
+                    ${monsterDetails.actions.length > 0 ? `
+                        <h3>Actions:</h3>
+                        ${monsterDetails.actions.map(action => `
+                            <h4>${action.name}</h4>
+                            <p>${action.desc}</p>
+                            ${action.damage && action.damage.length > 0 ? `
+                                <ul>
+                                    ${action.damage.map(d => `<li>${d.damage_dice} ${d.damage_type ? `(${d.damage_type.name})` : ''}</li>`).join('')}
+                                </ul>
+                            ` : ''}
+                        `).join('')}
+                    ` : ''}
+                    ${monsterDetails.legendary_actions && monsterDetails.legendary_actions.length > 0 ? `
+                        <h3>Legendary Actions:</h3>
+                        ${monsterDetails.legendary_actions.map(action => `
+                            <h4>${action.name}</h4>
+                            <p>${action.desc}</p>
+                        `).join('')}
+                    ` : ''}
+                `;
+                openModal(modalMonsterFullDetails);
+            }
+        }
+    });
+
+    // --- Monthly Code Unlock Event Listener ---
+    if (unlockMonthlyCodeBtn) {
+        unlockMonthlyCodeBtn.addEventListener('click', () => {
+            const now = new Date();
+            const currentYear = now.getFullYear();
+            const currentMonth = now.getMonth() + 1; // getMonth() is 0-indexed (0=Jan, 11=Dec)
+
+            const expectedCode = generateMonthlyCode(SECRET_KEY, currentYear, currentMonth);
+            const enteredCode = monthlyCodeInput.value.trim().toUpperCase(); // Convert input to uppercase for case-insensitive comparison
+
+            if (enteredCode === expectedCode) {
+                monthlyCodeMessage.textContent = "Features unlocked for this session! Enjoy your premium tools.";
+                monthlyCodeMessage.style.color = "green";
+                unlockFeaturesForSession(); // Unlock features and update UI
+                openMessageModal('Success!', 'Premium features are now unlocked for this session!');
+            } else {
+                monthlyCodeMessage.textContent = "Invalid code. Please try again or check the latest Patreon post for the current month's code.";
+                monthlyCodeMessage.style.color = "red";
+                // If an incorrect code is entered, ensure features are locked.
+                sessionStorage.removeItem(UNLOCKED_SESSION_KEY);
+                updateFeatureAccess();
+            }
+        });
+    }
+
+    // --- Initial setup when DOM is ready ---
     loadEncounter();
     fetchAllMonsters();
     fetchAllConditions(); // Fetch all conditions on load
-    handlePatreonCallback(); // Check for Patreon redirect on page load
-    updateFeatureAccess(); // Set initial feature access based on Patreon status
+
+    // Remove old Patreon-related calls if you are fully replacing it:
+    // handlePatreonCallback();
+    // patreonLoginBtn.addEventListener('click', loginWithPatreon);
+    // updateFeatureAccess(); // This line is now called at the end of DOMContentLoaded
+
+    // Ensure feature access is updated based on session storage on page load
+    updateFeatureAccess();
 });
+
+// --- Patreon Integration (REMOVED OR MODIFIED IF NO LONGER USED) ---
+// The original Patreon integration has been removed as per the user's request
+// for a free, automated, and non-Patreon dependent solution.
+// If you wish to re-implement Patreon, you would need a backend server
+// to securely handle the OAuth flow and token exchange.
