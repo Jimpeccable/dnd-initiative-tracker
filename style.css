@@ -316,7 +316,6 @@ hr {
     height: 14px;
 }
 
-
 .combatants-list {
     display: flex;
     flex-direction: column;
@@ -489,7 +488,6 @@ hr {
     height: 12px;
 }
 
-
 .combatant-hp-controls {
     display: flex;
     flex-direction: column;
@@ -511,7 +509,6 @@ hr {
     flex: 1;
     text-align: center;
 }
-
 
 .hp-input {
     width: 80px;
@@ -569,7 +566,6 @@ hr {
     width: 14px;
     height: 14px;
 }
-
 
 /* Death Saves */
 .death-saves {
@@ -639,7 +635,6 @@ hr {
     justify-content: center; /* Center conditions if they don't fill the row */
 }
 
-
 .condition-icon {
     width: 26px;
     height: 26px;
@@ -708,7 +703,6 @@ hr {
     height: 8px;
 }
 
-
 /* Combatant Actions */
 .combatant-actions {
     display: flex;
@@ -765,7 +759,6 @@ hr {
 .combatant-action-button.remove:hover { background-color: var(--color-red-dark); }
 .combatant-action-button.kill { background-color: #440000; color: #FFDADA; border-color: #880000; }
 .combatant-action-button.kill:hover { background-color: #880000; }
-
 
 /* Modals */
 .modal {
@@ -982,8 +975,8 @@ hr {
 }
 
 .patreon-button {
-    background-color: var(--color-red); /* Changed to red */
-    color: white; /* Text color remains white for contrast */
+    background-color: var(--color-patreon); /* Use the original Patreon red */
+    color: white;
     border: none;
     padding: 10px 20px;
     border-radius: 8px;
@@ -995,13 +988,13 @@ hr {
     align-items: center;
     gap: 8px;
     text-decoration: none;
-    box-shadow: 0 4px 15px rgba(229, 57, 53, 0.4); /* Adjusted shadow to match red */
+    box-shadow: 0 4px 15px rgba(255, 66, 77, 0.4);
 }
 
 .patreon-button:hover {
-    background-color: var(--color-red-dark); /* Darker red on hover */
+    background-color: #e63946; /* Darker red on hover */
     transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(229, 57, 53, 0.6); /* Adjusted shadow for hover */
+    box-shadow: 0 6px 20px rgba(255, 66, 77, 0.6);
 }
 
 .patreon-button i {
@@ -1055,7 +1048,6 @@ hr {
     margin-top: 15px; /* Space above the button */
 }
 
-
 .dm-tools-section {
     margin-top: 20px;
     padding-top: 15px;
@@ -1095,7 +1087,6 @@ hr {
     text-decoration: underline;
     background-color: rgba(26, 26, 26, 0.7);
 }
-
 
 /* Condition Description Modal */
 #modal-condition-description .modal-content {
@@ -1308,7 +1299,6 @@ hr {
     font-weight: 600;
 }
 
-
 /* Screen Reader Only for Accessibility */
 .sr-only {
     position: absolute;
@@ -1402,4 +1392,28 @@ hr {
     .patreon-promo p {
         font-size: 0.9em;
     }
+}
+
+/* Fix for Patreon Button Color */
+.footer-section .patreon-promo .patreon-button {
+    background-color: var(--color-patreon) !important;
+    color: white !important;
+    border: none !important;
+    padding: 10px 20px !important;
+    border-radius: 8px !important;
+    cursor: pointer !important;
+    font-size: 1em !important;
+    font-weight: 600 !important;
+    transition: all 0.2s ease !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    text-decoration: none !important;
+    box-shadow: 0 4px 15px rgba(255, 66, 77, 0.4) !important;
+}
+
+.footer-section .patreon-promo .patreon-button:hover {
+    background-color: #e63946 !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 6px 20px rgba(255, 66, 77, 0.6) !important;
 }
