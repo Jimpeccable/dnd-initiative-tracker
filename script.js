@@ -160,6 +160,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const monthlyCodeInput = document.getElementById('monthlyCodeInput');
     const unlockMonthlyCodeBtn = document.getElementById('unlockMonthlyCodeBtn');
     const monthlyCodeMessage = document.getElementById('monthlyCodeMessage');
+    const openUnlockModalBtn = document.getElementById('openUnlockModalBtn'); // New button to open the unlock modal
+    const modalMonthlyUnlock = document.getElementById('modal-monthly-unlock'); // New modal for unlock code
 
     // --- State Variables ---
     let combatants = [];
@@ -887,6 +889,15 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // --- Monthly Code Unlock Event Listener ---
+    // Button to open the unlock modal
+    if (openUnlockModalBtn) {
+        openUnlockModalBtn.addEventListener('click', () => {
+            openModal(modalMonthlyUnlock);
+            monthlyCodeInput.focus(); // Focus on the input when modal opens
+        });
+    }
+
+    // Unlock button inside the modal
     if (unlockMonthlyCodeBtn) {
         unlockMonthlyCodeBtn.addEventListener('click', () => {
             const now = new Date();
@@ -900,6 +911,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 monthlyCodeMessage.textContent = "Features unlocked for this session! Enjoy your premium tools.";
                 monthlyCodeMessage.style.color = "green";
                 unlockFeaturesForSession(); // Unlock features and update UI
+                closeModal(modalMonthlyUnlock); // Close the modal on success
                 openMessageModal('Success!', 'Premium features are now unlocked for this session!');
             } else {
                 monthlyCodeMessage.textContent = "Invalid code. Please try again or check the latest Patreon post for the current month's code.";
@@ -916,17 +928,10 @@ document.addEventListener('DOMContentLoaded', () => {
     fetchAllMonsters();
     fetchAllConditions(); // Fetch all conditions on load
 
-    // Remove old Patreon-related calls if you are fully replacing it:
-    // handlePatreonCallback();
-    // patreonLoginBtn.addEventListener('click', loginWithPatreon);
-    // updateFeatureAccess(); // This line is now called at the end of DOMContentLoaded
-
     // Ensure feature access is updated based on session storage on page load
     updateFeatureAccess();
 });
 
-// --- Patreon Integration (REMOVED OR MODIFIED IF NO LONGER USED) ---
-// The original Patreon integration has been removed as per the user's request
-// for a free, automated, and non-Patreon dependent solution.
-// If you wish to re-implement Patreon, you would need a backend server
-// to securely handle the OAuth flow and token exchange.
+// --- Patreon Integration (REMOVED) ---
+// All Patreon-related functions and variables have been removed as per your request
+// to use a free, automated, and non-Patreon dependent solution.
