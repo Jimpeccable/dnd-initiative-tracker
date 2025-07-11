@@ -1050,7 +1050,8 @@ hr {
 
 /* Container for the unlock features button to center it */
 .unlock-features-container {
-    text-align: center; /* Center the button within this container */
+    display: flex; /* Changed to flexbox */
+    justify-content: center; /* Center horizontally */
     margin-top: 15px; /* Space above the button */
 }
 
