@@ -16,7 +16,7 @@
     --color-amber-dark: #FF8F00;
     --color-gray: #555555; /* Neutral gray */
     --color-gray-dark: #333333;
-    --color-patreon: #FF7F00; /* Original Patreon color */
+    --color-patreon: #FF7F00; /* Patreon... */
     --font-primary: 'Inter', sans-serif;
     --font-heading: 'Poppins', sans-serif;
 }
@@ -676,7 +676,7 @@ h3 { font-size: 1.7em; }
 }
 
 .patreon-promo .patreon-button {
-    background-color: var(--color-patreon); /* This was the original, general rule */
+    background-color: var(--color-patreon);
     color: white;
     border: none;
     padding: 10px 20px;
@@ -702,7 +702,7 @@ h3 { font-size: 1.7em; }
     height: 20px;
 }
 
-/* Fix for Patreon Button Color - This rule ensures the button is red */
+/* Fix for Patreon Button Color */
 .footer-section .patreon-promo .patreon-button {
     background-color: var(--color-red) !important; /* Changed to red as requested */
     color: white !important;
