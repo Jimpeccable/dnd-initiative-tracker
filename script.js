@@ -263,6 +263,22 @@ let isPaidPatreonMember = false;
         }
     }
 
+    function loginWithPatreon() {
+    // Generate a random string for CSRF protection
+    const state = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+    localStorage.setItem('patreon_oauth_state', state);
+
+    // DEBUG: Show exactly what redirect URI is being used
+    alert('Debug - PATREON_REDIRECT_URI: ' + PATREON_REDIRECT_URI);
+    
+    const authUrl = `${PATREON_OAUTH_AUTHORIZE_URL}?response_type=code&client_id=${PATREON_CLIENT_ID}&redirect_uri=${encodeURIComponent(PATREON_REDIRECT_URI)}&scope=${encodeURIComponent(PATREON_SCOPE)}&state=${state}`;
+    
+    // DEBUG: Show the full auth URL
+    console.log('Full auth URL:', authUrl);
+    
+    window.location.href = authUrl;
+}
+
     /**
      * Generates a unique ID for combatants.
      * @returns {string} A unique ID.
