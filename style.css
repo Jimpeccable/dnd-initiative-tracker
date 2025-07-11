@@ -829,7 +829,7 @@ hr {
     box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.4);
 }
 
-.monster-search-results div {
+.monster-suggestion-item { /* Changed from div to specific class */
     padding: 8px 10px;
     cursor: pointer;
     border-bottom: 1px solid var(--color-border-subtle);
@@ -838,11 +838,11 @@ hr {
     font-size: 0.85em;
 }
 
-.monster-search-results div:last-child {
+.monster-suggestion-item:last-child {
     border-bottom: none;
 }
 
-.monster-search-results div:hover {
+.monster-suggestion-item:hover {
     background-color: var(--color-accent-secondary);
     color: var(--color-background-dark);
 }
@@ -1200,14 +1200,57 @@ hr {
     margin: 0 5px;
 }
 
-/* Styling for Patreon Locked Features */
-.patreon-locked-feature {
-    position: relative;
-    opacity: 0.4; /* Visually dim the locked features */
-    pointer-events: none; /* Disable all interactions */
+/* Styling for Monthly Unlock Feature */
+.feature-unlock-section {
+    margin-top: 20px;
+    padding: 20px;
+    background-color: var(--color-card-dark);
+    border-radius: 8px;
+    box-shadow: inset 0 0 8px rgba(0, 0, 0, 0.5);
+}
+
+.feature-unlock-section h3 {
+    margin-top: 0;
+    color: var(--color-accent-primary);
+}
+
+.feature-unlock-section .input-group {
+    display: flex;
+    gap: 10px;
+    margin-top: 15px;
+}
+
+.feature-unlock-section .input-field {
+    flex-grow: 1;
+}
+
+.feature-unlock-section .message-text {
+    margin-top: 15px;
+    font-weight: 500;
+    text-align: center;
+}
+
+
+/* Styling for elements that are locked/unlocked */
+.feature-locked {
+    pointer-events: none; /* Disables all mouse events on locked elements */
+    opacity: 0.4;        /* Makes locked elements semi-transparent */
     filter: grayscale(80%); /* Make it look inactive */
     transition: opacity 0.3s ease, filter 0.3s ease;
 }
+
+/* Message shown when a premium feature is locked */
+.feature-locked-message {
+    color: var(--color-text-muted);
+    font-size: 0.9em;
+    text-align: center;
+    margin-top: 10px;
+    padding: 5px;
+    border: 1px dashed var(--color-border-subtle);
+    border-radius: 5px;
+    display: none; /* Hidden by default, shown by JS when locked */
+}
+
 
 /* Screen Reader Only for Accessibility */
 .sr-only {
