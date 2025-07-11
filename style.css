@@ -982,8 +982,8 @@ hr {
 }
 
 .patreon-button {
-    background-color: #B71C1C; /* Patreon red */
-    color: white;
+    background-color: #00E0FF; /* Changed to desired light blue */
+    color: white; /* Text color remains white for contrast */
     border: none;
     padding: 10px 20px;
     border-radius: 8px;
@@ -995,13 +995,13 @@ hr {
     align-items: center;
     gap: 8px;
     text-decoration: none;
-    box-shadow: 0 4px 15px rgba(255, 66, 77, 0.4);
+    box-shadow: 0 4px 15px rgba(0, 224, 255, 0.4); /* Adjusted shadow to match light blue */
 }
 
 .patreon-button:hover {
-    background-color: #e63946; /* Darker red on hover */
+    background-color: #00B0CC; /* Darker blue on hover */
     transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(255, 66, 77, 0.6);
+    box-shadow: 0 6px 20px rgba(0, 224, 255, 0.6); /* Adjusted shadow for hover */
 }
 
 .patreon-button i {
