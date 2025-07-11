@@ -619,10 +619,26 @@ hr {
 /* Conditions Display on Combatant Row */
 .combatant-conditions {
     display: flex;
+    flex-direction: column; /* Changed to column for better layout on smaller screens */
     gap: 5px;
     flex-wrap: wrap;
     align-items: center;
 }
+.combatant-conditions h4 { /* Style for the "Conditions" title */
+    margin: 0; /* Remove default margin */
+    font-size: 0.8em;
+    color: var(--color-text-muted);
+    font-weight: 600;
+    text-align: center;
+    width: 100%; /* Ensure it takes full width */
+}
+.conditions-list-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    justify-content: center; /* Center conditions if they don't fill the row */
+}
+
 
 .condition-icon {
     width: 26px;
@@ -696,9 +712,24 @@ hr {
 /* Combatant Actions */
 .combatant-actions {
     display: flex;
+    flex-direction: column; /* Changed to column for better layout on smaller screens */
     gap: 6px;
     flex-wrap: wrap;
     justify-content: flex-end;
+}
+.combatant-actions h4 { /* Style for the "Actions" title */
+    margin: 0; /* Remove default margin */
+    font-size: 0.8em;
+    color: var(--color-text-muted);
+    font-weight: 600;
+    text-align: center;
+    width: 100%; /* Ensure it takes full width */
+}
+.combatant-actions .button-group { /* Wrap buttons in a group for better control */
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    justify-content: center;
 }
 
 .combatant-action-button {
@@ -829,7 +860,7 @@ hr {
     box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.4);
 }
 
-.monster-suggestion-item { /* Changed from div to specific class */
+.monster-search-results div {
     padding: 8px 10px;
     cursor: pointer;
     border-bottom: 1px solid var(--color-border-subtle);
@@ -838,11 +869,11 @@ hr {
     font-size: 0.85em;
 }
 
-.monster-suggestion-item:last-child {
+.monster-search-results div:last-child {
     border-bottom: none;
 }
 
-.monster-suggestion-item:hover {
+.monster-search-results div:hover {
     background-color: var(--color-accent-secondary);
     color: var(--color-background-dark);
 }
@@ -934,7 +965,7 @@ hr {
     margin-top: 15px;
 }
 
-.patreon-promo {
+.patreon-promo { /* Renamed to .premium-promo in HTML, but keeping this for compatibility if used elsewhere */
     background-color: rgba(26, 26, 26, 0.7);
     border-radius: 12px;
     padding: 20px;
@@ -950,6 +981,7 @@ hr {
     line-height: 1.5;
 }
 
+/* The .patreon-button class is no longer used for login, but might be for external links */
 .patreon-button {
     background-color: var(--color-patreon); /* Patreon red */
     color: white;
@@ -978,7 +1010,8 @@ hr {
     height: 18px;
 }
 
-.patreon-status-area {
+/* Renamed from .patreon-status-area */
+.premium-status-area {
     margin-top: 15px;
     padding-top: 10px;
     border-top: 1px solid var(--color-border-subtle);
@@ -988,7 +1021,7 @@ hr {
     gap: 10px;
 }
 
-.patreon-status-area p {
+.premium-status-area p {
     margin: 0;
     font-weight: 600;
     color: var(--color-text-light);
@@ -1200,55 +1233,50 @@ hr {
     margin: 0 5px;
 }
 
-/* Styling for Monthly Unlock Feature */
-.feature-unlock-section {
-    margin-top: 20px;
-    padding: 20px;
-    background-color: var(--color-card-dark);
-    border-radius: 8px;
-    box-shadow: inset 0 0 8px rgba(0, 0, 0, 0.5);
-}
-
-.feature-unlock-section h3 {
-    margin-top: 0;
-    color: var(--color-accent-primary);
-}
-
-.feature-unlock-section .input-group {
-    display: flex;
-    gap: 10px;
-    margin-top: 15px;
-}
-
-.feature-unlock-section .input-field {
-    flex-grow: 1;
-}
-
-.feature-unlock-section .message-text {
-    margin-top: 15px;
-    font-weight: 500;
-    text-align: center;
-}
-
-
-/* Styling for elements that are locked/unlocked */
-.feature-locked {
-    pointer-events: none; /* Disables all mouse events on locked elements */
-    opacity: 0.4;        /* Makes locked elements semi-transparent */
+/* Styling for Premium Locked Features */
+.premium-locked-feature {
+    position: relative;
+    opacity: 0.4; /* Visually dim the locked features */
+    pointer-events: none; /* Disable all interactions */
     filter: grayscale(80%); /* Make it look inactive */
     transition: opacity 0.3s ease, filter 0.3s ease;
 }
 
-/* Message shown when a premium feature is locked */
-.feature-locked-message {
+/* New: Styling for the Premium Unlock Modal */
+#modal-premium-unlock .modal-content {
+    max-width: 400px;
+    gap: 10px;
+}
+
+#modal-premium-unlock label {
+    align-self: flex-start;
+    font-weight: 500;
     color: var(--color-text-muted);
-    font-size: 0.9em;
+    font-size: 0.85em;
+}
+
+#modal-premium-unlock .input-field {
+    width: 100%;
     text-align: center;
-    margin-top: 10px;
-    padding: 5px;
-    border: 1px dashed var(--color-border-subtle);
-    border-radius: 5px;
-    display: none; /* Hidden by default, shown by JS when locked */
+    font-size: 1.1em;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+}
+
+.message-area {
+    min-height: 20px; /* Space for messages */
+    text-align: center;
+    font-size: 0.9em;
+    color: var(--color-text-light);
+    margin-top: 5px;
+}
+.message-area.success {
+    color: var(--color-green);
+    font-weight: 600;
+}
+.message-area.error {
+    color: var(--color-red);
+    font-weight: 600;
 }
 
 
