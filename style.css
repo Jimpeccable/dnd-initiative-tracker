@@ -147,24 +147,24 @@ hr {
     color: var(--color-background-dark);
     border: none;
     padding: 8px 15px; /* Reduced padding */
-    border-radius: 6px; /* More compact rounded corners */
+    border-radius: 6px;
     cursor: pointer;
-    font-size: 0.9em; /* Smaller font */
+    font-size: 0.9em;
     font-weight: 600;
-    transition: all 0.2s ease; /* Faster transitions */
+    transition: all 0.2s ease;
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 6px; /* Reduced spacing for icons */
+    gap: 6px;
     white-space: nowrap;
-    box-shadow: 0 2px 8px rgba(0, 224, 255, 0.2); /* Refined shadow */
+    box-shadow: 0 2px 8px rgba(0, 224, 255, 0.2);
     text-transform: uppercase;
-    letter-spacing: 0.03em; /* Tighter letter spacing */
+    letter-spacing: 0.03em;
 }
 
 .button:hover {
     background: linear-gradient(145deg, var(--color-accent-secondary), var(--color-accent-primary));
-    transform: translateY(-1px) scale(1.005); /* Subtle lift */
+    transform: translateY(-1px) scale(1.005);
     box-shadow: 0 4px 12px rgba(0, 224, 255, 0.3);
 }
 
@@ -174,7 +174,7 @@ hr {
 }
 
 .button i {
-    width: 16px; /* Smaller icons */
+    width: 16px;
     height: 16px;
 }
 
@@ -914,10 +914,10 @@ hr {
 }
 
 .dice-shortcut {
-    padding: 4px 8px; /* Even smaller padding */
-    font-size: 0.75em; /* Even smaller font */
-    min-width: 40px; /* Adjusted min-width */
-    height: 30px; /* Fixed height for consistency */
+    padding: 4px 8px;
+    font-size: 0.75em;
+    min-width: 40px;
+    height: 30px;
 }
 
 .roll-result {
@@ -965,13 +965,13 @@ hr {
     margin-top: 15px;
 }
 
-.patreon-promo { /* Renamed to .premium-promo in HTML, but keeping this for compatibility if used elsewhere */
+.patreon-promo { /* This is now the main Patreon support card */
     background-color: rgba(26, 26, 26, 0.7);
     border-radius: 12px;
     padding: 20px;
     text-align: center;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.6);
-    border: 1px solid rgba(0, 224, 255, 0.2);
+    border: 1px solid rgba(255, 66, 77, 0.2); /* Patreon red border */
 }
 
 .patreon-promo p {
@@ -981,7 +981,6 @@ hr {
     line-height: 1.5;
 }
 
-/* The .patreon-button class is no longer used for login, but might be for external links */
 .patreon-button {
     background-color: var(--color-patreon); /* Patreon red */
     color: white;
@@ -1010,7 +1009,29 @@ hr {
     height: 18px;
 }
 
-/* Renamed from .patreon-status-area */
+/* New: Premium Unlock and Status Section */
+.premium-unlock-status-section {
+    background-color: rgba(26, 26, 26, 0.7);
+    border-radius: 12px;
+    padding: 20px;
+    text-align: center;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.6);
+    border: 1px solid rgba(0, 224, 255, 0.2); /* Accent primary border */
+    margin-top: 15px; /* Space from previous section */
+}
+
+.premium-unlock-status-section h2 {
+    margin-top: 0;
+    margin-bottom: 10px;
+}
+
+.premium-unlock-status-section p {
+    font-size: 1em;
+    margin-bottom: 12px;
+    color: var(--color-text-muted);
+    line-height: 1.5;
+}
+
 .premium-status-area {
     margin-top: 15px;
     padding-top: 10px;
@@ -1026,6 +1047,13 @@ hr {
     font-weight: 600;
     color: var(--color-text-light);
 }
+
+/* Container for the unlock features button to center it */
+.unlock-features-container {
+    text-align: center; /* Center the button within this container */
+    margin-top: 15px; /* Space above the button */
+}
+
 
 .dm-tools-section {
     margin-top: 20px;
