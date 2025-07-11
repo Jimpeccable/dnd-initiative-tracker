@@ -16,12 +16,36 @@
     --color-amber-dark: #FF8F00;
     --color-gray: #555555; /* Neutral gray */
     --color-gray-dark: #333333;
-    --color-patreon: #FF7F00; /* Patreon red */
-
-    /* Font Families */
+    --color-patreon: #FF424D; /* Updated Patreon color to a more vibrant red */
     --font-primary: 'Inter', sans-serif;
     --font-heading: 'Poppins', sans-serif;
 }
+
+/* General Body and Typography */
+body {
+    font-family: var(--font-primary);
+    line-height: 1.4;
+    color: var(--color-text-light);
+    background-color: var(--color-background-dark);
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+    text-align: center; /* Center body content */
+}
+
+h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-heading);
+    color: var(--color-accent-primary);
+    margin-top: 0;
+    margin-bottom: 15px;
+}
+
+h1 { font-size: 2.5em; }
+h2 { font-size: 2em; }
+h3 { font-size: 1.7em; }
 
 /* Vanta.js Background */
 #vanta-background {
@@ -30,1321 +54,685 @@
     left: 0;
     width: 100%;
     height: 100%;
-    z-index: -1; /* Send to back */
-    opacity: 0.7; /* Slightly transparent to let content stand out */
+    z-index: -1;
 }
 
-/* General Body and Layout */
-body {
-    font-family: var(--font-primary);
-    background-color: var(--color-background-dark); /* Fallback if Vanta.js fails */
-    color: var(--color-text-light);
-    margin: 0;
-    padding: 10px; /* Further reduced padding */
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    min-height: 100vh;
-    line-height: 1.4; /* Tighter line height */
-    box-sizing: border-box;
-    font-size: 14px; /* Slightly smaller base font */
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-}
-
+/* Main Container */
 .container {
+    max-width: 1200px;
+    margin: 20px auto;
+    padding: 20px;
     background-color: var(--color-container-dark);
-    border-radius: 12px; /* Slightly less rounded for compactness */
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.8); /* Refined shadow */
-    padding: 20px; /* Reduced padding */
-    width: 98%;
-    max-width: 1000px; /* Adjusted max width for compactness */
-    margin-bottom: 15px; /* Reduced margin */
-    box-sizing: border-box;
+    border-radius: 12px;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
+    flex-grow: 1; /* Allows container to grow and push footer down */
     display: flex;
     flex-direction: column;
-    gap: 15px; /* Reduced spacing between main sections */
-    border: 1px solid rgba(255, 255, 255, 0.05); /* Subtle border for glass effect */
-}
-
-h1, h2, h3 {
-    font-family: var(--font-heading);
-    color: var(--color-accent-primary);
-    text-align: center;
-    margin-bottom: 10px; /* Reduced margin */
-    text-shadow: 0 0 6px rgba(0, 224, 255, 0.3); /* Refined glow */
-    font-weight: 700;
-}
-
-h1 { font-size: 2.2em; } /* Smaller */
-h2 { font-size: 1.8em; }
-h3 { font-size: 1.5em; } /* Smaller */
-h4 { /* For HP Controls and Monster Details */
-    font-family: var(--font-primary);
-    color: var(--color-text-light);
-    font-size: 1em;
-    margin-top: 0;
-    margin-bottom: 5px;
-    text-align: center;
-    font-weight: 600;
-}
-
-hr {
-    border: none;
-    border-top: 1px solid var(--color-border-subtle);
-    margin: 10px 0; /* Reduced margin */
-}
-
-/* Card Style for Sections */
-.card {
-    background-color: var(--color-card-dark);
-    border-radius: 8px;
-    padding: 15px;
-    box-shadow: inset 0 0 8px rgba(0, 0, 0, 0.5);
-}
-
-/* Form Group - General */
-.form-group {
-    display: flex;
-    flex-direction: column;
-    margin-bottom: 8px; /* Reduced margin */
-    gap: 6px; /* Reduced spacing */
-}
-
-.form-group label {
-    font-weight: 500;
-    color: var(--color-text-muted);
-    font-size: 0.85em; /* Smaller font */
-}
-
-.input-field {
-    padding: 8px 12px; /* Reduced padding */
-    border: 1px solid var(--color-border-subtle);
-    border-radius: 6px; /* More compact rounded corners */
-    background-color: rgba(42, 42, 42, 0.7); /* Semi-transparent background */
-    color: var(--color-text-light);
-    font-size: 0.9em;
-    outline: none;
-    transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease; /* Faster transitions */
-    -webkit-appearance: none;
-    -moz-appearance: none;
-    appearance: none;
-}
-
-.input-field::placeholder {
-    color: #777777;
-}
-
-.input-field:focus {
-    border-color: var(--color-accent-primary);
-    box-shadow: 0 0 0 2px rgba(0, 224, 255, 0.25); /* Refined focus glow */
-    background-color: rgba(42, 42, 42, 0.9); /* More opaque on focus */
-}
-
-/* Buttons - Unified Styling */
-.button {
-    background: linear-gradient(145deg, var(--color-accent-primary), var(--color-accent-secondary));
-    color: var(--color-background-dark);
-    border: none;
-    padding: 8px 15px; /* Reduced padding */
-    border-radius: 6px;
-    cursor: pointer;
-    font-size: 0.9em;
-    font-weight: 600;
-    transition: all 0.2s ease;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
-    white-space: nowrap;
-    box-shadow: 0 2px 8px rgba(0, 224, 255, 0.2);
-    text-transform: uppercase;
-    letter-spacing: 0.03em;
-}
-
-.button:hover {
-    background: linear-gradient(145deg, var(--color-accent-secondary), var(--color-accent-primary));
-    transform: translateY(-1px) scale(1.005);
-    box-shadow: 0 4px 12px rgba(0, 224, 255, 0.3);
-}
-
-.button:active {
-    transform: translateY(0);
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
-}
-
-.button i {
-    width: 16px;
-    height: 16px;
-}
-
-/* Specific Button Colors */
-.button-primary {
-    background: linear-gradient(145deg, var(--color-accent-primary), var(--color-accent-secondary));
-    box-shadow: 0 2px 8px rgba(0, 224, 255, 0.2);
-    color: var(--color-background-dark);
-}
-.button-primary:hover {
-    background: linear-gradient(145deg, var(--color-accent-secondary), var(--color-accent-primary));
-    box-shadow: 0 4px 12px rgba(0, 224, 255, 0.3);
-}
-
-.button-secondary {
-    background-color: var(--color-card-dark);
-    color: var(--color-text-light);
-    border: 1px solid var(--color-border-subtle);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-}
-.button-secondary:hover {
-    background-color: var(--color-gray-dark);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-}
-
-.button-tertiary {
-    background-color: rgba(26, 26, 26, 0.7);
-    color: var(--color-text-light);
-    border: 1px solid var(--color-border-subtle);
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
-}
-.button-tertiary:hover {
-    background-color: rgba(58, 58, 58, 0.8);
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
-}
-
-.button-danger {
-    background: linear-gradient(145deg, var(--color-red), var(--color-red-dark));
-    box-shadow: 0 2px 8px rgba(229, 57, 53, 0.2);
-    color: var(--color-text-light);
-}
-.button-danger:hover {
-    background: linear-gradient(145deg, var(--color-red-dark), var(--color-red));
-    box-shadow: 0 4px 12px rgba(229, 57, 53, 0.3);
-}
-
-.button-warning {
-    background: linear-gradient(145deg, var(--color-amber), var(--color-amber-dark));
-    box-shadow: 0 2px 8px rgba(255, 179, 0, 0.2);
-    color: var(--color-background-dark);
-}
-.button-warning:hover {
-    background: linear-gradient(145deg, var(--color-amber-dark), var(--color-amber));
-    box-shadow: 0 4px 12px rgba(255, 179, 0, 0.3);
-}
-
-.button:disabled {
-    background: var(--color-card-dark);
-    color: var(--color-text-muted);
-    cursor: not-allowed;
-    box-shadow: none;
-    transform: none;
-    opacity: 0.5;
-}
-.button:disabled:hover {
-    background: var(--color-card-dark);
-    color: var(--color-text-muted);
-    cursor: not-allowed;
-    box-shadow: none;
-    transform: none;
-}
-
-.button-group {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    justify-content: center;
+    align-items: center; /* Center content horizontally */
 }
 
 /* Header Section */
 .header-section {
+    width: 100%;
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 10px;
-    margin-bottom: 15px;
+    margin-bottom: 25px;
+}
+
+.header-section h1 {
+    color: var(--color-accent-primary);
+    margin-bottom: 10px;
+    text-shadow: 0 0 10px rgba(0, 224, 255, 0.5);
 }
 
 .round-turn-display {
     display: flex;
     gap: 20px;
-    font-size: 1em;
-    font-weight: 500;
-    color: var(--color-text-muted);
+    font-size: 1.1em;
+    color: var(--color-text-light);
+    background-color: var(--color-card-dark);
+    padding: 8px 15px;
+    border-radius: 8px;
+    border: 1px solid var(--color-border-subtle);
 }
 
 .round-turn-display span {
     color: var(--color-accent-primary);
-    font-weight: 700;
-    font-size: 1.05em;
+    font-weight: 600;
 }
 
 /* Main Content Grid */
 .main-content-grid {
     display: grid;
-    grid-template-columns: 2fr 1fr; /* Combatants list wider than utility */
-    gap: 15px;
+    grid-template-columns: 1fr 2fr; /* Left column 1 part, right 2 parts */
+    gap: 25px;
+    width: 100%;
+    margin-bottom: 25px;
 }
 
-/* Combatants Section */
-.combatants-section {
+/* Left Column - Combatant Management */
+.left-column, .right-column {
     display: flex;
     flex-direction: column;
+    gap: 20px;
+}
+
+.combatant-management, .initiative-tracker, .dice-roller {
+    background-color: var(--color-card-dark);
+    padding: 20px;
+    border-radius: 10px;
+    border: 1px solid var(--color-border-subtle);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+}
+
+.combatant-management h2, .initiative-tracker h2, .dice-roller h2 {
+    color: var(--color-accent-primary);
+    border-bottom: 1px solid var(--color-border-subtle);
+    padding-bottom: 10px;
+    margin-bottom: 20px;
+}
+
+.button-group {
+    display: flex;
+    flex-wrap: wrap; /* Allow buttons to wrap on smaller screens */
     gap: 10px;
-}
-
-/* New button groups for better organization */
-.controls-combatants-setup,
-.controls-combatants-action {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px; /* Spacing between buttons */
     justify-content: center;
-    margin-bottom: 10px; /* Space between the two rows of buttons */
+    margin-bottom: 15px;
 }
 
-/* Make buttons smaller */
-.controls-combatants-setup .button,
-.controls-combatants-action .button {
-    padding: 6px 12px; /* Smaller padding */
-    font-size: 0.8em; /* Smaller font size */
-    gap: 4px; /* Smaller gap for icons */
-    height: 35px; /* Fixed height for consistency */
-}
-
-.controls-combatants-setup .button i,
-.controls-combatants-action .button i {
-    width: 14px; /* Smaller icons */
-    height: 14px;
-}
-
-.combatants-list {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    padding: 8px;
+/* Buttons */
+.button {
+    background-color: var(--color-gray);
+    color: var(--color-text-light);
+    border: none;
+    padding: 10px 20px;
     border-radius: 8px;
-    background-color: rgba(10, 10, 10, 0.5); /* Slightly darker background for the list area */
-    box-shadow: inset 0 0 8px rgba(0, 0, 0, 0.5);
-    min-height: 200px; /* Ensure visibility even when empty */
-}
-
-.combatant-row {
-    display: grid;
-    grid-template-columns: 1.5fr 1.2fr 1fr 1.5fr; /* Info, HP, Conditions, Actions */
-    align-items: center;
-    background-color: rgba(26, 26, 26, 0.7);
-    padding: 8px 12px;
-    border-radius: 8px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+    cursor: pointer;
+    font-size: 1em;
+    font-weight: 500;
     transition: all 0.2s ease;
-    border-left: 3px solid transparent;
-    position: relative;
+    display: inline-flex;
+    align-items: center;
     gap: 8px;
-    min-height: 70px;
+    text-decoration: none;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 
-.combatant-row.current-turn {
-    background-color: rgba(42, 42, 42, 0.9);
-    border-left-color: var(--color-accent-primary);
-    box-shadow: 0 4px 12px rgba(0, 224, 255, 0.3), 0 0 8px rgba(0, 224, 255, 0.4);
-    transform: translateY(-1px);
-    z-index: 1;
+.button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
-.combatant-row.dead {
-    opacity: 0.3;
-    background-color: rgba(74, 49, 49, 0.7);
-    border-left-color: var(--color-red);
+.button-primary {
+    background-color: var(--color-accent-primary);
+    color: var(--color-background-dark);
+    font-weight: 600;
+    box-shadow: 0 4px 15px rgba(0, 224, 255, 0.4);
+}
+
+.button-primary:hover {
+    background-color: var(--color-accent-secondary);
+}
+
+.button-danger {
+    background-color: var(--color-red);
+    color: white;
+    box-shadow: 0 4px 15px rgba(229, 57, 53, 0.4);
+}
+
+.button-danger:hover {
+    background-color: var(--color-red-dark);
+}
+
+.button-neutral {
+    background-color: var(--color-gray);
+    color: var(--color-text-light);
+}
+
+.button-neutral:hover {
+    background-color: var(--color-gray-dark);
+}
+
+.button-success {
+    background-color: var(--color-green);
+    color: white;
+    box-shadow: 0 4px 15px rgba(76, 175, 80, 0.4);
+}
+
+.button-success:hover {
+    background-color: var(--color-green-dark);
+}
+
+.button-amber {
+    background-color: var(--color-amber);
+    color: var(--color-background-dark);
+    box-shadow: 0 4px 15px rgba(255, 179, 0, 0.4);
+}
+
+.button-amber:hover {
+    background-color: var(--color-amber-dark);
+}
+
+
+/* Input Fields */
+.input-field {
+    width: calc(100% - 20px);
+    padding: 10px;
+    margin-bottom: 15px;
+    border: 1px solid var(--color-border-subtle);
+    border-radius: 8px;
+    background-color: var(--color-background-dark);
+    color: var(--color-text-light);
+    font-size: 1em;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.input-field:focus {
+    outline: none;
+    border-color: var(--color-accent-primary);
+    box-shadow: 0 0 0 3px rgba(0, 224, 255, 0.3);
+}
+
+/* Combatant List */
+#combatantsList {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    max-height: 600px; /* Adjust as needed */
+    overflow-y: auto;
+    border: 1px solid var(--color-border-subtle);
+    border-radius: 8px;
+}
+
+#combatantsList::-webkit-scrollbar {
+    width: 8px;
+}
+
+#combatantsList::-webkit-scrollbar-track {
+    background: var(--color-card-dark);
+    border-radius: 10px;
+}
+
+#combatantsList::-webkit-scrollbar-thumb {
+    background: var(--color-accent-secondary);
+    border-radius: 10px;
+}
+
+#combatantsList::-webkit-scrollbar-thumb:hover {
+    background: var(--color-accent-primary);
+}
+
+.combatant-item {
+    display: flex;
+    align-items: center;
+    padding: 12px 15px;
+    border-bottom: 1px solid var(--color-border-subtle);
+    background-color: var(--color-card-dark);
+    transition: background-color 0.2s ease, transform 0.1s ease;
+}
+
+.combatant-item:last-child {
+    border-bottom: none;
+}
+
+.combatant-item.active-turn {
+    background-color: rgba(0, 224, 255, 0.1); /* Light cyan background for active turn */
+    border-left: 5px solid var(--color-accent-primary);
+    padding-left: 10px;
+    animation: pulseBorder 1.5s infinite alternate;
+}
+
+@keyframes pulseBorder {
+    from { border-color: var(--color-accent-primary); }
+    to { border-color: rgba(0, 224, 255, 0.3); }
+}
+
+.combatant-item.dying {
+    background-color: rgba(229, 57, 53, 0.1); /* Light red background for dying */
+    border-left: 5px solid var(--color-red);
+    padding-left: 10px;
+}
+
+.combatant-item.dying .combatant-hp {
+    color: var(--color-red);
+    font-weight: 700;
 }
 
 .combatant-info {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 2px;
+    flex-grow: 1;
+    text-align: left;
 }
 
 .combatant-name {
     font-weight: 600;
+    font-size: 1.1em;
     color: var(--color-text-light);
-    font-size: 1em;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    width: 100%;
-}
-.clickable-monster-name {
-    cursor: pointer;
-    text-decoration: underline;
-    text-underline-offset: 2px;
-    text-decoration-color: rgba(0, 224, 255, 0.5);
-    transition: text-decoration-color 0.2s ease;
-}
-.clickable-monster-name:hover {
-    text-decoration-color: var(--color-accent-primary);
 }
 
-.instance-number {
-    font-size: 0.65em;
+.combatant-details {
+    font-size: 0.9em;
     color: var(--color-text-muted);
-    font-weight: 400;
 }
 
-.combatant-ac, .combatant-hp {
-    font-size: 0.8em;
-    color: var(--color-text-muted);
-    display: flex;
-    align-items: center;
-    gap: 2px;
-}
-
-.hp-display, .ac-display, .initiative-score-display {
+.combatant-hp {
     font-weight: 600;
-    color: var(--color-accent-primary);
+    margin-left: 15px;
+    color: var(--color-green); /* Default HP color */
 }
 
-.hp-display.healthy { color: var(--color-green); }
-.hp-display.wounded { color: var(--color-amber); }
-.hp-display.bloodied { color: var(--color-red); }
-.hp-display.critical, .hp-display.dying { color: var(--color-red-dark); }
-.hp-display.dead { color: var(--color-red); text-decoration: line-through; }
-
-.temp-hp-display {
+.combatant-hp.low {
     color: var(--color-amber);
-    font-weight: 600;
 }
 
-.combatant-initiative-score {
-    font-size: 0.8em;
-    color: var(--color-text-muted);
-    display: flex;
-    align-items: center;
-    gap: 2px;
-    white-space: nowrap;
+.combatant-hp.critical {
+    color: var(--color-red);
 }
 
-.initiative-input {
-    width: 50px;
-    padding: 5px 6px;
-    border: 1px solid var(--color-border-subtle);
-    border-radius: 4px;
-    background-color: rgba(42, 42, 42, 0.7);
-    color: var(--color-text-light);
-    font-size: 0.85em;
-    text-align: center;
-    outline: none;
-    transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
-}
-.initiative-input:focus {
-    border-color: var(--color-accent-primary);
-    box-shadow: 0 0 0 1px rgba(0, 224, 255, 0.2);
-    background-color: rgba(42, 42, 42, 0.9);
-}
-
-/* Monster Stats Display on Combatant Row */
-.combatant-stats-rolls {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-    margin-top: 5px;
-    font-size: 0.75em;
-    color: var(--color-text-muted);
-}
-
-.stat-item {
-    display: flex;
-    align-items: center;
-    gap: 2px;
-    background-color: rgba(58, 58, 58, 0.5);
-    padding: 2px 6px;
-    border-radius: 4px;
-    border: 1px solid rgba(255, 255, 255, 0.05);
-}
-
-.stat-item strong {
-    color: var(--color-text-light);
-    margin-right: 2px;
-}
-
-.stat-roll-button {
-    background: none;
-    border: none;
-    color: var(--color-accent-primary);
-    cursor: pointer;
-    padding: 0;
-    margin-left: 3px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 16px;
-    height: 16px;
-    transition: transform 0.1s ease;
-}
-.stat-roll-button:hover {
-    transform: scale(1.1);
-    color: var(--color-accent-secondary);
-}
-.stat-roll-button i {
-    width: 12px;
-    height: 12px;
-}
-
-.combatant-hp-controls {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 5px;
-}
-
-.hp-control-titles {
-    display: flex;
-    justify-content: space-around;
-    width: 100%;
-    font-size: 0.7em; /* Smaller titles */
-    color: var(--color-text-muted);
-    font-weight: 600;
-    margin-bottom: -5px; /* Pull closer to input */
-}
-
-.hp-control-title {
-    flex: 1;
-    text-align: center;
-}
-
-.hp-input {
-    width: 80px;
-    padding: 6px 8px;
-    border: 1px solid var(--color-border-subtle);
-    border-radius: 6px;
-    background-color: rgba(42, 42, 42, 0.7);
-    color: var(--color-text-light);
-    font-size: 0.9em;
-    text-align: center;
-    outline: none;
-    transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
-}
-
-.hp-action-buttons-row {
-    display: flex;
-    gap: 5px;
-    margin-top: 5px;
-}
-
-.hp-action-button {
-    background-color: var(--color-accent-primary);
-    color: var(--color-background-dark);
-    border: none;
-    width: 30px;
-    height: 30px;
-    border-radius: 5px;
-    font-size: 0.9em;
-    font-weight: 700;
-    cursor: pointer;
-    transition: background-color 0.2s ease, transform 0.1s ease;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
-}
-
-.hp-action-button:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
-}
-.hp-action-button:active {
-    transform: translateY(0);
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
-}
-
-.hp-action-button.damage { background-color: var(--color-red); }
-.hp-action-button.damage:hover { background-color: var(--color-red-dark); }
-.hp-action-button.heal { background-color: var(--color-green); }
-.hp-action-button.heal:hover { background-color: var(--color-green-dark); }
-.hp-action-button.temp { background-color: var(--color-amber); color: var(--color-background-dark); }
-.hp-action-button.temp:hover { background-color: var(--color-amber-dark); }
-
-.hp-action-button i {
-    width: 14px;
-    height: 14px;
-}
-
-/* Death Saves */
-.death-saves {
-    display: flex;
-    flex-direction: column;
-    gap: 3px;
-    margin-top: 6px;
-    grid-column: 1 / -1;
-    padding-top: 6px;
-    border-top: 1px dashed var(--color-border-subtle);
-}
-
-.death-save-row {
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    font-size: 0.8em;
-    color: var(--color-text-muted);
-}
-
-.death-save-box {
-    width: 20px;
-    height: 20px;
-    border: 1px solid var(--color-border-subtle);
-    border-radius: 3px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 0.7em;
-    font-weight: bold;
-    color: var(--color-text-muted);
-    cursor: pointer;
-    transition: background-color 0.2s ease, border-color 0.2s ease;
-}
-
-.death-save-box.success {
-    background-color: var(--color-green);
-    border-color: var(--color-green-dark);
-    color: white;
-}
-.death-save-box.failure {
-    background-color: var(--color-red);
-    border-color: var(--color-red-dark);
-    color: white;
-}
-
-/* Conditions Display on Combatant Row */
-.combatant-conditions {
-    display: flex;
-    flex-direction: column; /* Changed to column for better layout on smaller screens */
-    gap: 5px;
-    flex-wrap: wrap;
-    align-items: center;
-}
-.combatant-conditions h4 { /* Style for the "Conditions" title */
-    margin: 0; /* Remove default margin */
-    font-size: 0.8em;
-    color: var(--color-text-muted);
-    font-weight: 600;
-    text-align: center;
-    width: 100%; /* Ensure it takes full width */
-}
-.conditions-list-container {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 5px;
-    justify-content: center; /* Center conditions if they don't fill the row */
-}
-
-.condition-icon {
-    width: 26px;
-    height: 26px;
-    background-color: var(--color-border-subtle);
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 0.7em;
-    color: var(--color-text-light);
-    cursor: pointer;
-    transition: all 0.2s ease;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
-    position: relative;
-    font-weight: 600;
-}
-
-.condition-icon:hover {
-    background-color: var(--color-accent-primary);
-    transform: scale(1.05);
-    box-shadow: 0 2px 6px rgba(0, 224, 255, 0.4);
-}
-
-.condition-icon i {
-    width: 16px;
-    height: 16px;
-}
-
-.condition-icon .duration {
-    position: absolute;
-    bottom: -3px;
-    right: -3px;
-    background-color: var(--color-accent-primary);
-    color: var(--color-background-dark);
-    font-size: 0.6em;
-    padding: 0px 3px;
-    border-radius: 5px;
-    font-weight: 700;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
-}
-
-.condition-remove-btn {
-    position: absolute;
-    top: -3px;
-    right: -3px;
-    background-color: var(--color-red);
-    color: white;
-    border-radius: 50%;
-    width: 14px;
-    height: 14px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 0.7em;
-    cursor: pointer;
-    transition: background-color 0.2s ease;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
-}
-
-.condition-remove-btn:hover {
-    background-color: var(--color-red-dark);
-}
-
-.condition-remove-btn i {
-    width: 8px;
-    height: 8px;
-}
-
-/* Combatant Actions */
 .combatant-actions {
     display: flex;
-    flex-direction: column; /* Changed to column for better layout on smaller screens */
-    gap: 6px;
-    flex-wrap: wrap;
-    justify-content: flex-end;
+    gap: 8px;
+    margin-left: 15px;
 }
-.combatant-actions h4 { /* Style for the "Actions" title */
-    margin: 0; /* Remove default margin */
-    font-size: 0.8em;
-    color: var(--color-text-muted);
-    font-weight: 600;
-    text-align: center;
-    width: 100%; /* Ensure it takes full width */
-}
-.combatant-actions .button-group { /* Wrap buttons in a group for better control */
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
+
+.combatant-actions .button {
+    padding: 6px 10px;
+    font-size: 0.9em;
+    min-width: 40px; /* Ensure buttons are not too small */
     justify-content: center;
 }
 
-.combatant-action-button {
-    background-color: rgba(26, 26, 26, 0.7);
+.combatant-actions .button svg {
+    width: 18px;
+    height: 18px;
+}
+
+/* Initiative Tracker Controls */
+.initiative-controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: center;
+    margin-top: 20px;
+}
+
+/* Dice Roller */
+.dice-roller {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.dice-roller-input-group {
+    display: flex;
+    width: 100%;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+.dice-roller-input-group .input-field {
+    flex-grow: 1;
+    margin-bottom: 0; /* Remove bottom margin here */
+}
+
+.dice-shortcut-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: center;
+    margin-bottom: 15px;
+}
+
+.dice-shortcut {
+    background-color: var(--color-gray-dark);
     color: var(--color-text-light);
     border: 1px solid var(--color-border-subtle);
-    padding: 6px 10px;
-    border-radius: 5px;
+    padding: 8px 12px;
+    border-radius: 6px;
     cursor: pointer;
-    font-size: 0.8em;
-    transition: all 0.2s ease;
-    white-space: nowrap;
+    font-size: 0.9em;
+    transition: background-color 0.2s ease, transform 0.1s ease;
+}
+
+.dice-shortcut:hover {
+    background-color: var(--color-gray);
+    transform: translateY(-1px);
+}
+
+#rollResult {
+    background-color: var(--color-background-dark);
+    border: 1px solid var(--color-border-subtle);
+    padding: 10px 15px;
+    border-radius: 8px;
+    min-height: 40px;
     display: flex;
     align-items: center;
-    gap: 3px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+    justify-content: center;
+    font-size: 1.2em;
+    font-weight: 600;
+    color: var(--color-accent-primary);
+    width: calc(100% - 30px); /* Account for padding */
+    word-wrap: break-word; /* Ensure long results wrap */
 }
-
-.combatant-action-button:hover {
-    background-color: rgba(58, 58, 58, 0.8);
-    transform: translateY(-1px);
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
-}
-
-.combatant-action-button i {
-    width: 12px;
-    height: 12px;
-}
-
-.combatant-action-button.edit { background-color: var(--color-amber); color: var(--color-background-dark); border-color: var(--color-amber-dark); }
-.combatant-action-button.edit:hover { background-color: var(--color-amber-dark); }
-.combatant-action-button.remove { background-color: var(--color-red); color: var(--color-text-light); border-color: var(--color-red-dark); }
-.combatant-action-button.remove:hover { background-color: var(--color-red-dark); }
-.combatant-action-button.kill { background-color: #440000; color: #FFDADA; border-color: #880000; }
-.combatant-action-button.kill:hover { background-color: #880000; }
 
 /* Modals */
 .modal {
-    display: none;
-    position: fixed;
-    z-index: 1000;
+    display: none; /* Hidden by default */
+    position: fixed; /* Stay in place */
+    z-index: 1000; /* Sit on top */
     left: 0;
     top: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.85);
+    width: 100%; /* Full width */
+    height: 100%; /* Full height */
+    overflow: auto; /* Enable scroll if needed */
+    background-color: rgba(0, 0, 0, 0.7); /* Black w/ opacity */
     justify-content: center;
     align-items: center;
-    backdrop-filter: blur(10px);
-    animation: fadeInOverlay 0.3s ease-out forwards;
+    backdrop-filter: blur(5px);
 }
 
-@keyframes fadeInOverlay {
-    from { background-color: rgba(0, 0, 0, 0); backdrop-filter: blur(0px); }
-    to { background-color: rgba(0, 0, 0, 0.85); backdrop-filter: blur(10px); }
+.modal.active {
+    display: flex;
 }
 
 .modal-content {
-    background-color: rgba(42, 42, 42, 0.9);
-    padding: 25px;
+    background-color: var(--color-card-dark);
+    margin: auto;
+    padding: 30px;
     border-radius: 12px;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.9);
+    border: 1px solid var(--color-border-subtle);
     width: 90%;
-    max-width: 450px;
+    max-width: 500px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
     position: relative;
-    animation: fadeInModal 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    animation: fadeIn 0.3s ease-out;
 }
 
-@keyframes fadeInModal {
-    from { opacity: 0; transform: translateY(-15px) scale(0.98); }
-    to { opacity: 1; transform: translateY(0) scale(1); }
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.modal-content h2 {
+    color: var(--color-accent-primary);
+    margin-bottom: 20px;
+    border-bottom: 1px solid var(--color-border-subtle);
+    padding-bottom: 10px;
+}
+
+.modal-content label {
+    display: block;
+    text-align: left;
+    margin-bottom: 8px;
+    color: var(--color-text-light);
+    font-weight: 500;
+}
+
+.modal-content .input-field,
+.modal-content select {
+    width: calc(100% - 20px);
+    margin-bottom: 20px;
+}
+
+.modal-content .button-group {
+    margin-top: 20px;
+    justify-content: flex-end; /* Align buttons to the right */
 }
 
 .close-button {
-    color: var(--color-text-muted);
-    font-size: 24px;
-    font-weight: bold;
     position: absolute;
     top: 10px;
-    right: 12px;
+    right: 10px;
+    color: var(--color-text-muted);
+    font-size: 24px;
     cursor: pointer;
-    transition: color 0.2s ease, transform 0.2s ease;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 28px;
-    height: 28px;
+    transition: color 0.2s ease;
+    background: none;
+    border: none;
+    padding: 5px;
     border-radius: 50%;
 }
 
 .close-button:hover {
     color: var(--color-accent-primary);
-    transform: rotate(90deg) scale(1.05);
-}
-.close-button i {
-    width: 18px;
-    height: 18px;
+    background-color: rgba(0, 224, 255, 0.1);
 }
 
-.modal-content h2 {
-    margin-top: 0;
-    margin-bottom: 6px;
-    color: var(--color-accent-primary);
-    font-size: 1.5em;
-    text-align: center;
+.close-button svg {
+    width: 24px;
+    height: 24px;
 }
 
-.modal-content p {
-    text-align: center;
-    color: var(--color-text-muted);
-    font-size: 0.9em;
-    margin-bottom: 15px;
-}
-
-/* Monster Search Suggestions within Modal */
-#monsterSearchResults {
-    max-height: 150px;
+/* Specific Modal Styles */
+#modal-monster-add .monster-search-results {
+    max-height: 200px;
     overflow-y: auto;
     border: 1px solid var(--color-border-subtle);
-    border-radius: 6px;
-    background-color: rgba(26, 26, 26, 0.8);
-    margin-top: 6px;
-    box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.4);
+    border-radius: 8px;
+    margin-top: 10px;
+    background-color: var(--color-background-dark);
 }
 
-.monster-search-results div {
-    padding: 8px 10px;
-    cursor: pointer;
+.monster-search-results .monster-search-item {
+    padding: 10px 15px;
     border-bottom: 1px solid var(--color-border-subtle);
-    transition: background-color 0.2s ease, color 0.2s ease;
-    color: var(--color-text-light);
-    font-size: 0.85em;
+    cursor: pointer;
+    text-align: left;
+    transition: background-color 0.2s ease;
 }
 
-.monster-search-results div:last-child {
+.monster-search-results .monster-search-item:last-child {
     border-bottom: none;
 }
 
-.monster-search-results div:hover {
-    background-color: var(--color-accent-secondary);
-    color: var(--color-background-dark);
+.monster-search-results .monster-search-item:hover {
+    background-color: rgba(0, 224, 255, 0.1);
 }
 
-/* Dice Roller Section */
-.dice-roller {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-}
-
-.dice-roller-input {
-    display: flex;
-    gap: 8px;
-    align-items: center;
-    justify-content: center;
-    flex-wrap: wrap;
-}
-
-.dice-roller-input input {
-    flex-grow: 1;
-    max-width: 180px;
-}
-
-.common-rolls {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 6px;
-    margin-top: 8px;
-}
-
-.common-rolls h4 {
-    width: 100%;
-    text-align: center;
-    margin-bottom: 5px;
+.monster-search-results .monster-search-item strong {
     color: var(--color-accent-primary);
 }
 
-.dice-shortcut {
-    padding: 4px 8px;
-    font-size: 0.75em;
-    min-width: 40px;
-    height: 30px;
+.monster-search-results .monster-search-item span {
+    color: var(--color-text-muted);
+    font-size: 0.9em;
+    margin-left: 10px;
 }
 
-.roll-result {
-    margin-top: 10px;
-    font-size: 1.2em;
-    font-weight: 700;
+/* Monster Full Details Modal */
+#monsterDetailsContent {
+    text-align: left;
+    max-height: 70vh; /* Limit height for scrollability */
+    overflow-y: auto;
+    padding-right: 10px; /* For scrollbar space */
+}
+
+#monsterDetailsContent h3 {
     color: var(--color-accent-primary);
-    background-color: rgba(26, 26, 26, 0.8);
-    padding: 12px;
-    border-radius: 6px;
-    min-height: 25px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    text-shadow: 0 0 5px rgba(0, 224, 255, 0.25);
-    border: 1px solid var(--color-border-subtle);
-}
-
-/* Party Management */
-.party-management {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-}
-
-.party-management-controls {
-    display: flex;
-    gap: 8px;
-    flex-wrap: wrap;
-    justify-content: center;
-}
-
-.party-management-controls select {
-    flex-grow: 1;
-    max-width: 220px;
-}
-
-/* Footer Section */
-.footer-section {
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
-    width: 100%;
-    max-width: 1000px;
     margin-top: 15px;
+    margin-bottom: 5px;
+    border-bottom: 1px solid var(--color-border-subtle);
+    padding-bottom: 5px;
+}
+
+#monsterDetailsContent p,
+#monsterDetailsContent ul {
+    color: var(--color-text-light);
+    margin-bottom: 10px;
+}
+
+#monsterDetailsContent ul {
+    list-style-type: disc;
+    margin-left: 20px;
+}
+
+#monsterDetailsContent strong {
+    color: var(--color-accent-primary);
+}
+
+/* Condition List in Edit Modal */
+#activeConditionsList {
+    list-style: none;
+    padding: 0;
+    margin: 15px 0;
+    border: 1px solid var(--color-border-subtle);
+    border-radius: 8px;
+    max-height: 150px;
+    overflow-y: auto;
+    background-color: var(--color-background-dark);
+}
+
+.condition-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--color-border-subtle);
+}
+
+.condition-item:last-child {
+    border-bottom: none;
+}
+
+.condition-item span {
+    font-weight: 500;
+    color: var(--color-text-light);
+}
+
+.condition-item .button {
+    padding: 4px 8px;
+    font-size: 0.8em;
+}
+
+/* Message Modal */
+.message-area {
+    margin-top: 10px;
+    padding: 10px;
+    border-radius: 8px;
+    font-weight: 500;
+    text-align: center;
+    display: none; /* Hidden by default */
+}
+
+.message-area.success {
+    background-color: rgba(76, 175, 80, 0.2);
+    color: var(--color-green);
+    border: 1px solid var(--color-green);
+}
+
+.message-area.error {
+    background-color: rgba(229, 57, 53, 0.2);
+    color: var(--color-red);
+    border: 1px solid var(--color-red);
+}
+
+.message-area.info {
+    background-color: rgba(0, 224, 255, 0.1);
+    color: var(--color-accent-primary);
+    border: 1px solid var(--color-accent-primary);
+}
+
+
+/* Footer */
+.footer-section {
+    width: 100%;
+    margin-top: 30px;
+    padding: 20px 0;
+    background-color: var(--color-card-dark);
+    border-top: 1px solid var(--color-border-subtle);
+    color: var(--color-text-muted);
+    font-size: 0.9em;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+}
+
+.footer-section p {
+    margin: 0;
+}
+
+.footer-section a {
+    color: var(--color-accent-primary);
+    text-decoration: none;
+    transition: color 0.2s ease;
+}
+
+.footer-section a:hover {
+    color: var(--color-accent-secondary);
 }
 
 .patreon-promo {
-    background-color: rgba(26, 26, 26, 0.7);
-    border-radius: 12px;
-    padding: 20px;
-    text-align: center;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.6);
-    border: 1px solid rgba(0, 224, 255, 0.2);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
 }
 
 .patreon-promo p {
     font-size: 1em;
-    margin-bottom: 12px;
-    color: var(--color-text-muted);
-    line-height: 1.5;
+    font-weight: 500;
+    color: var(--color-text-light);
+}
+
+.patreon-promo .patreon-button {
+    background-color: var(--color-patreon);
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 1em;
+    font-weight: 600;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    text-decoration: none;
+    box-shadow: 0 4px 15px rgba(255, 66, 77, 0.4);
+}
+
+.patreon-promo .patreon-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(255, 66, 77, 0.6);
+}
+
+.patreon-promo .patreon-button svg {
+    width: 20px;
+    height: 20px;
 }
 
 /* Fix for Patreon Button Color */
-.footer-section .patreon-promo a.button.patreon-button {
-    background-color: var(--color-patreon) !important;
+.footer-section .patreon-promo .patreon-button {
+    background-color: var(--color-red) !important; /* Changed to --color-red */
     color: white !important;
-    border: none !important;
-    padding: 10px 20px !important;
-    border-radius: 8px !important;
-    cursor: pointer !important;
-    font-size: 1em !important;
-    font-weight: 600 !important;
-    transition: all 0.2s ease !important;
-    display: inline-flex !important;
-    align-items: center !important;
-    gap: 8px !important;
-    text-decoration: none !important;
-    box-shadow: 0 4px 15px rgba(255, 66, 77, 0.4) !important;
 }
 
-.footer-section .patreon-promo a.button.patreon-button:hover {
-    background-color: #e63946 !important;
-    transform: translateY(-2px) !important;
-    box-shadow: 0 6px 20px rgba(255, 66, 77, 0.6) !important;
-}
-
-/* New: Premium Unlock and Status Section */
-.premium-unlock-status-section {
-    background-color: rgba(26, 26, 26, 0.7);
-    border-radius: 12px;
-    padding: 20px;
-    text-align: center;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.6);
-    border: 1px solid rgba(0, 224, 255, 0.2); /* Accent primary border */
-    margin-top: 15px; /* Space from previous section */
-}
-
-.premium-unlock-status-section h2 {
-    margin-top: 0;
-    margin-bottom: 10px;
-}
-
-.premium-unlock-status-section p {
-    font-size: 1em;
-    margin-bottom: 12px;
-    color: var(--color-text-muted);
-    line-height: 1.5;
-}
-
-.premium-status-area {
-    margin-top: 15px;
-    padding-top: 10px;
-    border-top: 1px solid var(--color-border-subtle);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 10px;
-}
-
-.premium-status-area p {
-    margin: 0;
-    font-weight: 600;
-    color: var(--color-text-light);
-}
-
-/* Container for the unlock features button to center it */
-.unlock-features-container {
-    display: flex; /* Changed to flexbox */
-    justify-content: center; /* Center horizontally */
-    margin-top: 15px; /* Space above the button */
-}
-
-.dm-tools-section {
-    margin-top: 20px;
-    padding-top: 15px;
-    border-top: 1px solid var(--color-border-subtle);
-    text-align: left;
-}
-
-.dm-tools-section h4 {
-    text-align: center;
-    margin-bottom: 10px;
-    color: var(--color-accent-primary);
-}
-
-.dm-tools-section ul {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-}
-
-.dm-tools-section li a {
-    color: var(--color-text-light);
-    text-decoration: none;
-    transition: color 0.2s ease, text-decoration 0.2s ease;
-    font-size: 0.95em;
-    display: block;
-    padding: 5px 10px;
-    background-color: rgba(10, 10, 10, 0.5);
-    border-radius: 6px;
-    border: 1px solid rgba(255, 255, 255, 0.05);
-}
-
-.dm-tools-section li a:hover {
-    color: var(--color-accent-primary);
-    text-decoration: underline;
-    background-color: rgba(26, 26, 26, 0.7);
-}
-
-/* Condition Description Modal */
-#modal-condition-description .modal-content {
-    max-width: 550px;
-}
-
-#modal-condition-description .condition-description-content {
-    font-size: 0.9em;
-    line-height: 1.6;
-    color: var(--color-text-light);
-    max-height: 300px;
-    overflow-y: auto;
-    padding: 10px;
-    border-radius: 5px;
-    box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.4);
-    background-color: rgba(10, 10, 10, 0.8);
-    border: 1px solid var(--color-border-subtle);
-}
-
-#modal-condition-description .condition-description-content p {
-    margin-bottom: 0.7em;
-}
-
-/* Add Condition Modal */
-#modal-add-condition .modal-content {
-    max-width: 650px;
-}
-
-#addConditionSearchInput {
-    width: 100%;
-    padding: 8px 12px;
-    margin-bottom: 10px;
-    border-radius: 6px;
-    background-color: rgba(26, 26, 26, 0.8);
-    color: var(--color-text-light);
-    border: 1px solid var(--color-border-subtle);
-}
-
-.condition-selection-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
-    gap: 6px;
-    max-height: 250px;
-    overflow-y: auto;
-    padding: 6px;
-    margin-bottom: 10px;
-    background-color: rgba(26, 26, 26, 0.8);
-    border-radius: 6px;
-    border: 1px solid var(--color-border-subtle);
-    box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.4);
-}
-
-.condition-item {
-    background-color: rgba(10, 10, 10, 0.8);
-    border-radius: 6px;
-    padding: 8px;
-    text-align: center;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 4px;
-    border: 2px solid transparent;
-    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
-}
-
-.condition-item:hover {
-    background-color: rgba(26, 26, 26, 0.9);
-    transform: translateY(-1px);
-    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.4);
-    border-color: var(--color-accent-primary);
-}
-
-.condition-item.selected {
-    background-color: var(--color-accent-primary);
-    color: var(--color-background-dark);
-    transform: scale(1.01);
-    box-shadow: 0 4px 10px rgba(0, 224, 255, 0.5);
-    font-weight: 600;
-    border-color: var(--color-accent-primary);
-}
-.condition-item.selected span {
-    color: var(--color-background-dark);
-}
-
-.condition-item span {
-    font-size: 0.85em;
-    font-weight: 500;
-    color: var(--color-text-light);
-}
-
-#conditionDurationInput {
-    width: 100%;
-}
-
-/* Clear Confirmation Modal */
-.clear-options {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    margin-top: 20px;
-}
-.clear-options .button {
-    width: 100%;
-}
-
-/* Monster Full Details Modal */
-#modal-monster-full-details .modal-content {
-    max-width: 700px;
-}
-.monster-full-details-content {
-    font-size: 0.9em;
-    line-height: 1.6;
-    color: var(--color-text-light);
-    max-height: 400px;
-    overflow-y: auto;
-    padding: 12px;
-    border-radius: 6px;
-    box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.4);
-    background-color: rgba(10, 10, 10, 0.8);
-    border: 1px solid var(--color-border-subtle);
-}
-.monster-full-details-content h4 {
-    color: var(--color-accent-primary);
-    margin-top: 15px;
-    margin-bottom: 5px;
-    font-size: 1.1em;
-    border-bottom: 1px solid var(--color-border-subtle);
-    padding-bottom: 3px;
-}
-.monster-full-details-content p, .monster-full-details-content ul {
-    margin-bottom: 8px;
-}
-.monster-full-details-content ul {
-    padding-left: 20px;
-}
-.monster-full-details-content li {
-    margin-bottom: 4px;
-}
-.monster-full-details-content strong {
-    color: var(--color-text-light);
-}
-
-/* Generic Message/Confirmation Modals */
-#modal-message .modal-content,
-#modal-confirmation .modal-content {
-    max-width: 350px;
-    text-align: center;
-}
-#modal-message #messageModalText,
-#modal-confirmation #confirmationModalText {
-    margin-bottom: 20px;
-}
-#modal-message #messageModalCloseBtn {
-    width: 100%;
-}
-#modal-confirmation .button-group {
-    justify-content: space-around;
-}
-#modal-confirmation .button-group .button {
-    flex-grow: 1;
-    margin: 0 5px;
-}
-
-/* Styling for Premium Locked Features */
-.premium-locked-feature {
-    position: relative;
-    opacity: 0.4; /* Visually dim the locked features */
-    pointer-events: none; /* Disable all interactions */
-    filter: grayscale(80%); /* Make it look inactive */
-    transition: opacity 0.3s ease, filter 0.3s ease;
-}
-
-/* New: Styling for the Premium Unlock Modal */
-#modal-premium-unlock .modal-content {
-    max-width: 400px;
-    gap: 10px;
-}
-
-#modal-premium-unlock label {
-    align-self: flex-start;
-    font-weight: 500;
-    color: var(--color-text-muted);
-    font-size: 0.85em;
-}
-
-#modal-premium-unlock .input-field {
-    width: 100%;
-    text-align: center;
-    font-size: 1.1em;
-    letter-spacing: 2px;
-    text-transform: uppercase;
-}
-
-.message-area {
-    min-height: 20px; /* Space for messages */
-    text-align: center;
-    font-size: 0.9em;
-    color: var(--color-text-light);
-    margin-top: 5px;
-}
-.message-area.success {
-    color: var(--color-green);
-    font-weight: 600;
-}
-.message-area.error {
-    color: var(--color-red);
-    font-weight: 600;
-}
-
-/* Screen Reader Only for Accessibility */
-.sr-only {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    padding: 0;
-    margin: -1px;
-    overflow: hidden;
-    clip: rect(0, 0, 0, 0);
-    white-space: nowrap;
-    border-width: 0;
-}
 
 /* Responsive Design */
-@media (max-width: 1024px) {
+@media (max-width: 992px) {
+    .main-content-grid {
+        grid-template-columns: 1fr; /* Stack columns on smaller screens */
+    }
+
     .container {
+        margin: 15px auto;
         padding: 15px;
-        gap: 12px;
     }
 
-    .combatant-row {
-        grid-template-columns: 1.4fr 1.1fr 1.4fr 1.1fr;
-        gap: 6px;
-        padding: 6px 10px;
-        min-height: 65px;
-    }
+    h1 { font-size: 2em; }
+    h2 { font-size: 1.8em; }
+    h3 { font-size: 1.5em; }
 
-    .combatant-info {
-        align-items: flex-start;
-    }
-
-    .combatant-hp-controls,
-    .combatant-actions {
-        justify-content: flex-start;
-    }
-
-    .combatant-action-button {
-        padding: 5px 8px;
-        font-size: 0.75em;
+    .modal-content {
+        padding: 25px;
     }
 }
 
 @media (max-width: 768px) {
-    body {
-        padding: 8px;
-    }
-
     .container {
-        padding: 12px;
-        gap: 10px;
+        margin: 10px auto;
+        padding: 15px;
     }
 
     h1 { font-size: 1.8em; }
@@ -1388,4 +776,10 @@ hr {
     .patreon-promo p {
         font-size: 0.9em;
     }
+}
+
+/* Fix for Patreon Button Color */
+.footer-section .patreon-promo .patreon-button {
+    background-color: var(--color-patreon) !important;
+    color: white !important;
 }
