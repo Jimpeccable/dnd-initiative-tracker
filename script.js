@@ -122,11 +122,10 @@ const PATREON_REDIRECT_URI = `${PATREON_AUTH_SERVICE_URL}/.netlify/functions/pat
 
 const PATREON_API_BASE_URL = 'https://www.patreon.com/api/oauth2/v2';
 const PATREON_OAUTH_AUTHORIZE_URL = 'https://www.patreon.com/oauth2/authorize';
+// FIXED: Removed invalid 'campaigns.members' scope
 const PATREON_SCOPE = 'identity identity[email] identity.memberships campaigns';
 
 // Client secret is now removed from frontend as it will be used by Netlify Function.
-// const PATREON_CLIENT_SECRET = 'd09zDlNitIXfcszn5Sp2aLHs-8yIt3jQ7rT7Y04GhvGmN9_Cn4Kcq1_FBk3BfvLa'; // REMOVED from client-side
-
 let patreonAccessToken = null;
 let patreonRefreshToken = null; // Store refresh token
 let patreonTokenExpiresAt = null; // Store expiration timestamp
@@ -1558,20 +1557,23 @@ Once you have provided the JSON - Ask the player to return to the Initiative tra
         openModal(modalMonsterFullDetails);
     }
 
-    // --- Patreon Integration Functions ---
+  // --- Patreon Integration Functions ---
 
-    /**
-     * Initiates the Patreon OAuth login flow by redirecting the user.
-     */
+/**
+ * Initiates the Patreon OAuth login flow by redirecting the user.
+ */
 function loginWithPatreon() {
     // Generate a random string for CSRF protection
     const state = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
     localStorage.setItem('patreon_oauth_state', state); // Store state to verify on callback
 
     const authUrl = `${PATREON_OAUTH_AUTHORIZE_URL}?response_type=code&client_id=${PATREON_CLIENT_ID}&redirect_uri=${encodeURIComponent(PATREON_REDIRECT_URI)}&scope=${encodeURIComponent(PATREON_SCOPE)}&state=${state}`;
+    
+    console.log('Redirecting to Patreon OAuth URL:', authUrl);
+    console.log('PATREON_REDIRECT_URI:', PATREON_REDIRECT_URI);
+    
     window.location.href = authUrl;
 }
-
 
 /**
  * Handles the callback from Patreon after user authorization.
@@ -1605,7 +1607,6 @@ function handlePatreonCallback() {
         patreonTokenExpiresAt = Date.now() + (parseInt(expiresIn) * 1000); // Calculate expiration time
 
         // Store tokens securely (e.g., in localStorage or sessionStorage for client-side use)
-        // For production, consider more robust client-side token management (e.g., HttpOnly cookies, Web Workers)
         localStorage.setItem('patreon_access_token', patreonAccessToken);
         localStorage.setItem('patreon_refresh_token', patreonRefreshToken);
         localStorage.setItem('patreon_token_expires_at', patreonTokenExpiresAt);
@@ -1644,8 +1645,7 @@ function handlePatreonCallback() {
 }
 
 /**
- * Exchanges the authorization code for an access token
- * IMPORTANT: In production, this should be done on your backend server
+ * Refreshes the Patreon access token using the refresh token
  */
 async function refreshPatreonToken() {
     if (!patreonRefreshToken) {
@@ -1794,7 +1794,7 @@ function clearPatreonTokens() {
     console.log('Patreon tokens cleared.');
 }
 
-    /**
+/**
  * Updates UI elements based on Patreon membership status.
  * @param {boolean} hasAccess - True if the user has paid Patreon access.
  */
