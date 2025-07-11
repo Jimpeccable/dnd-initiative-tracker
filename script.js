@@ -111,26 +111,26 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const DND_API_BASE_URL = 'https://www.dnd5eapi.co/api';
 
-    // --- Patreon Integration Variables and Constants ---
-    // IMPORTANT: Replace 'YOUR_PATREON_CLIENT_ID' with your actual Client ID from Patreon Developer Portal.
-    // This ID is publicly visible and safe to include in client-side code.
-    const PATREON_CLIENT_ID = 'JW9W45NLv7p_AKrUR6HA-cf03EFjQmABOvpWU_37C0QjTgDLMMbwnDLncoX2YMq6';
-    // The redirect URI MUST EXACTLY match one configured in your Patreon Developer Client settings.
-    // For local testing, use http://localhost:8000 (or your local server port).
-    // For GitHub Pages, use your deployed URL, e.g., https://YOUR_USERNAME.github.io/YOUR_REPOSITORY_NAME/
-    const PATREON_REDIRECT_URI = 'https://patreon-auth.nat20.live'; // Dynamically sets to current page URL
-    const PATREON_API_BASE_URL = 'https://www.patreon.com/api/oauth2/v2';
-    const PATREON_OAUTH_AUTHORIZE_URL = 'https://www.patreon.com/oauth2/authorize';
-    // Corrected Patreon scopes for APIv2 to fetch identity, email, memberships, and campaigns.
-    const PATREON_SCOPE = 'identity identity[email] identity.memberships campaigns';
-    // IMPORTANT: This client secret should ideally be handled on a backend for security.
-    // For client-side demonstration, it's included here as per user request.
-    // const PATREON_CLIENT_SECRET = 'd09zDlNitIXfcszn5Sp2aLHs-8yIt3jQ7rT7Y04GhvGmN9_Cn4Kcq1_FBk3BfvLa';
+// --- Patreon Integration Variables and Constants ---
+// IMPORTANT: The PATREON_CLIENT_ID remains in client-side code as it's public.
+const PATREON_CLIENT_ID = 'JW9W45NLv7p_AKrUR6HA-cf03EFjQmABOvpWU_37C0QjTgDLMMbwnDLncoX2YMq6';
 
-    let patreonAccessToken = null;
-    let patreonRefreshToken = null; // Store refresh token
-    let patreonTokenExpiresAt = null; // Store expiration timestamp
-    let isPaidPatreonMember = false;
+// The new redirect URI points to your Netlify Function's callback endpoint.
+// Make sure this exact URL is configured in your Patreon Developer Portal.
+const PATREON_AUTH_SERVICE_URL = 'https://patreon-auth.nat20.live';
+const PATREON_REDIRECT_URI = `${PATREON_AUTH_SERVICE_URL}/.netlify/functions/patreon-callback`;
+
+const PATREON_API_BASE_URL = 'https://www.patreon.com/api/oauth2/v2';
+const PATREON_OAUTH_AUTHORIZE_URL = 'https://www.patreon.com/oauth2/authorize';
+const PATREON_SCOPE = 'identity identity[email] identity.memberships campaigns';
+
+// Client secret is now removed from frontend as it will be used by Netlify Function.
+// const PATREON_CLIENT_SECRET = 'd09zDlNitIXfcszn5Sp2aLHs-8yIt3jQ7rT7Y04GhvGmN9_Cn4Kcq1_FBk3BfvLa'; // REMOVED from client-side
+
+let patreonAccessToken = null;
+let patreonRefreshToken = null; // Store refresh token
+let patreonTokenExpiresAt = null; // Store expiration timestamp
+let isPaidPatreonMember = false;
 
     // Get references to Patreon UI elements
     const patreonLoginBtn = document.getElementById('patreonLoginBtn');
