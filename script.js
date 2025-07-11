@@ -5,7 +5,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const rollDiceBtn = document.getElementById('rollDiceBtn');
     const rollResultDiv = document.getElementById('rollResult');
     const commonRollButtons = document.querySelectorAll('.dice-shortcut');
-    handlePatreonCallback();
+    
 
     // Get references to HTML elements
     const currentRoundSpan = document.getElementById('currentRound');
