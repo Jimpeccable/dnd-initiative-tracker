@@ -5,7 +5,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const rollDiceBtn = document.getElementById('rollDiceBtn');
     const rollResultDiv = document.getElementById('rollResult');
     const commonRollButtons = document.querySelectorAll('.dice-shortcut');
-    
+    // REMOVED: handlePatreonCallback(); // This call was too early, causing the ReferenceError
 
     // Get references to HTML elements
     const currentRoundSpan = document.getElementById('currentRound');
@@ -383,7 +383,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         statRollsHtml += `
                             <span class="stat-item">
                                 <strong>${statName}:</strong> ${statValue} (${modifierSign}${modifier})
-                                <button class="stat-roll-button" data-id="${combatant.id}" data-stat="${statName}" data-modifier="${modifier}" title="Roll 1d20 for ${statName}"><i data-lucide="dice"></i></button>
+                                <button class="stat-roll-button" data-id="${combatant.id}" data-stat="${statName}" data-modifier="${modifier}" title="Roll 1d20 for ${statName}"><i data-lucide="dice-5"></i></button>
                             </span>
                         `;
                     }
@@ -420,7 +420,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>
                 <div class="combatant-actions">
                     <h4>Actions</h4>
-                    <button class="combatant-action-button roll-init-btn" data-id="${combatant.id}" data-init-bonus="${combatant.initiativeBonus}" title="Roll initiative for this combatant"><i data-lucide="dice"></i> Roll Init</button>
+                    <button class="combatant-action-button roll-init-btn" data-id="${combatant.id}" data-init-bonus="${combatant.initiativeBonus}" title="Roll initiative for this combatant"><i data-lucide="dice-5"></i> Roll Init</button>
                     <button class="combatant-action-button add-condition-btn" data-id="${combatant.id}" title="Add a condition"><i data-lucide="thermometer"></i> Add Condition</button>
                     <button class="combatant-action-button kill" data-id="${combatant.id}" title="Set HP to 0 (Kill)"><i data-lucide="skull"></i> Kill</button>
                     <button class="combatant-action-button edit" data-id="${combatant.id}" title="Edit combatant details"><i data-lucide="edit"></i> Edit</button>
@@ -611,19 +611,19 @@ document.addEventListener('DOMContentLoaded', () => {
                         intelligence: c.monsterDetails.intelligence,
                         wisdom: c.wisdom,
                         charisma: c.charisma,
-                        proficiencies: c.monsterDetails.proficiencies,
-                        damage_vulnerabilities: c.monsterDetails.damage_vulnerabilities,
-                        damage_resistances: c.monsterDetails.damage_resistances,
-                        damage_immunities: c.monsterDetails.damage_immunities,
-                        condition_immunities: c.monsterDetails.condition_immunities,
-                        senses: c.monsterDetails.senses,
-                        languages: c.monsterDetails.languages,
-                        challenge_rating: c.monsterDetails.challenge_rating,
-                        xp: c.monsterDetails.xp,
-                        special_abilities: c.monsterDetails.special_abilities,
-                        actions: c.monsterDetails.actions,
-                        legendary_actions: c.monsterDetails.legendary_actions,
-                        reactions: c.monsterDetails.reactions
+                        proficiencies: c.proficiencies,
+                        damage_vulnerabilities: c.damage_vulnerabilities,
+                        damage_resistances: c.damage_resistances,
+                        damage_immunities: c.damage_immunities,
+                        condition_immunities: c.condition_immunities,
+                        senses: c.senses,
+                        languages: c.languages,
+                        challenge_rating: c.challenge_rating,
+                        xp: c.xp,
+                        special_abilities: c.special_abilities,
+                        actions: c.actions,
+                        legendary_actions: c.legendary_actions,
+                        reactions: c.reactions
                     } : null,
                     stats: c.stats || null, // Also save custom stats if present
                     description: c.description || '',
