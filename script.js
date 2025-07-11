@@ -1370,12 +1370,11 @@ Once you have provided the JSON - Ask the player to return to the Initiative tra
             monsterSearchResults.innerHTML = '';
             monsterSearchResults.style.display = 'none';
             selectedMonsterData = null; // Clear selected monster data
-            // Reset custom monster inputs
-            monsterNameModalInput.value = '';
-            monsterInitiativeModalInput.value = '';
-            monsterHpModalInput.value = '';
-            monsterAcModalInput.value = '';
             addMonsterModalBtn.disabled = true; // Disable until a monster is selected or custom data entered
+            monsterNameModalInput.value = ''; // Clear custom monster name
+            monsterInitiativeModalInput.value = ''; // Clear custom monster init
+            monsterHpModalInput.value = ''; // Clear custom monster HP
+            monsterAcModalInput.value = ''; // Clear custom monster AC
             monsterSearchInput.focus();
             if (allMonsters.length === 0) {
                 fetchAllMonsters(); // Fetch monsters if not already loaded
