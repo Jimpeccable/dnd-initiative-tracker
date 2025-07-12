@@ -1624,8 +1624,6 @@ function sha256(str) {
 }
 
 // Make sure this secret matches exactly on both sites
-const MONTHLY_CODE_SECRET = "YourSecretKey2025";
-
 function generateMonthlyCode() {
     const date = new Date();
     const year = date.getFullYear();
