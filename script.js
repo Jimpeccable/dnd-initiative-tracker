@@ -1537,9 +1537,7 @@ Once you have provided the JSON - Ask the player to return to the Initiative tra
         openModal(modalMonsterFullDetails);
     }
 
-    // --- Premium Feature Unlock System Functions ---
-
-// Fallback SHA-256 implementation for non-secure contexts
+ // Same SHA-256 implementation (must be identical)
 function sha256(str) {
     function rightRotate(value, amount) {
         return (value >>> amount) | (value << (32 - amount));
@@ -1625,50 +1623,24 @@ function sha256(str) {
     return sha256Hash(str);
 }
 
-/**
- * Generates a unique, predictable 8-character alphanumeric code for the current month.
- * Uses SHA-256 hash of a secret key + YYYY-MM string.
- * @returns {Promise<string>} The 8-character alphanumeric code.
- */
-async function generateMonthlyCode() {
+// Make sure this secret matches exactly on both sites
+const MONTHLY_CODE_SECRET = "YourSecretKey2025";
+
+function generateMonthlyCode() {
     const date = new Date();
     const year = date.getFullYear();
-    const month = (date.getMonth() + 1).toString().padStart(2, '0'); // 01-12
-
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    
     const inputString = `${MONTHLY_CODE_SECRET}-${year}-${month}`;
+    const hexHash = sha256(inputString);
     
-    let hexHash;
-    
-    // Try to use Web Crypto API first (secure contexts)
-    if (typeof crypto !== 'undefined' && crypto.subtle) {
-        try {
-            const textEncoder = new TextEncoder();
-            const data = textEncoder.encode(inputString);
-            const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-            const hashArray = Array.from(new Uint8Array(hashBuffer));
-            hexHash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-        } catch (e) {
-            console.warn('Web Crypto API failed, falling back to JS implementation');
-            hexHash = sha256(inputString);
-        }
-    } else {
-        // Fallback to JavaScript implementation
-        console.warn('Web Crypto API not available, using fallback');
-        hexHash = sha256(inputString);
-    }
-
-    // Take the first 8 alphanumeric characters
+    // Take first 8 alphanumeric characters
     const alphanumericHash = hexHash.replace(/[^a-zA-Z0-9]/g, '');
     return alphanumericHash.substring(0, 8).toUpperCase();
 }
 
-/**
- * Checks the entered code against the generated monthly code.
- * @param {string} enteredCode - The code entered by the user.
- * @returns {Promise<boolean>} True if the code matches, false otherwise.
- */
-async function checkMonthlyCode(enteredCode) {
-    const expectedCode = await generateMonthlyCode();
+function checkMonthlyCode(enteredCode) {
+    const expectedCode = generateMonthlyCode();
     return enteredCode.toUpperCase() === expectedCode;
 }
 
